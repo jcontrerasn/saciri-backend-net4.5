@@ -162,6 +162,10 @@
     <Compile Include="Dtos\OcurrenciaResponse.cs" />
     <Compile Include="Dtos\SolicitudFlagRequest.cs" />
     <Compile Include="Dtos\SolicitudFlagResponse.cs" />
+    <Compile Include="Dtos\SolicitudComentarioResponse.cs" />
+    <Compile Include="Dtos\SolicitudPorCodigoResponse.cs" />
+    <Compile Include="Dtos\SolicitudEnProcesoRequest.cs" />
+    <Compile Include="Dtos\SolicitudEnProcesoResponse.cs" />
     <Compile Include="Dtos\RegistrarSolicitudRequest.cs" />
     <Compile Include="Dtos\RegistrarSolicitudResponse.cs" />
     <Compile Include="Dtos\SubcategoriaResponse.cs" />
@@ -174,6 +178,8 @@
     <Compile Include="Entities\CentroCosto.cs" />
     <Compile Include="Entities\Ocurrencia.cs" />
     <Compile Include="Entities\SolicitudFlag.cs" />
+    <Compile Include="Entities\SolicitudComentarioDetalle.cs" />
+    <Compile Include="Entities\SolicitudPorCodigo.cs" />
     <Compile Include="Entities\Subcategoria.cs" />
     <Compile Include="Entities\TipoRegistro.cs" />
     <Compile Include="Entities\Usuario.cs" />
@@ -185,11 +191,13 @@
     <Compile Include="Interfaces\ICentroCostoRepository.cs" />
     <Compile Include="Interfaces\IOcurrenciaRepository.cs" />
     <Compile Include="Interfaces\ISolicitudRepository.cs" />
+    <Compile Include="Interfaces\ISolicitudPorCodigoRepository.cs" />
     <Compile Include="Interfaces\ISubcategoriaRepository.cs" />
     <Compile Include="Interfaces\ITipoRegistroRepository.cs" />
     <Compile Include="Interfaces\IUsuarioRepository.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Repositories\SqlSolicitudRepository.cs" />
+    <Compile Include="Repositories\SqlSolicitudPorCodigoRepository.cs" />
     <Compile Include="Repositories\SqlCategoriaRepository.cs" />
     <Compile Include="Repositories\SqlCentroCostoRepository.cs" />
     <Compile Include="Repositories\SqlOcurrenciaRepository.cs" />

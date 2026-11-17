@@ -11,8 +11,16 @@ namespace SACIRI_backend.Services
     public class SolicitudService
     {
         private readonly ISolicitudRepository repository;
+        private readonly ISolicitudPorCodigoRepository repositoryPorCodigo;
 
         public SolicitudService(ISolicitudRepository repository)
+            : this(repository, null)
+        {
+        }
+
+        public SolicitudService(
+            ISolicitudRepository repository,
+            ISolicitudPorCodigoRepository repositoryPorCodigo)
         {
             if (repository == null)
             {
@@ -20,6 +28,7 @@ namespace SACIRI_backend.Services
             }
 
             this.repository = repository;
+            this.repositoryPorCodigo = repositoryPorCodigo;
         }
 
         public async Task<RegistrarSolicitudResponse> RegistrarAsync(
@@ -105,6 +114,112 @@ namespace SACIRI_backend.Services
                 CopiaJefatura = solicitud.CopiaJefatura,
                 Estado = solicitud.Estado
             }).ToList();
+        }
+
+        public async Task<SolicitudPorCodigoResponse> BuscarPorCodigoAsync(
+            string codigoSolicitud,
+            CancellationToken cancellationToken = default(CancellationToken))
+        {
+            if (string.IsNullOrWhiteSpace(codigoSolicitud))
+            {
+                throw new ArgumentException(
+                    "El código de solicitud es obligatorio.",
+                    "codigoSolicitud");
+            }
+
+            if (repositoryPorCodigo == null)
+            {
+                throw new InvalidOperationException(
+                    "El repositorio de solicitudes por código no está configurado.");
+            }
+
+            var solicitud = await repositoryPorCodigo.BuscarAsync(
+                codigoSolicitud.Trim(),
+                cancellationToken).ConfigureAwait(false);
+
+            if (solicitud == null)
+            {
+                return null;
+            }
+
+            return new SolicitudPorCodigoResponse
+            {
+                IdSolicitud = solicitud.IdSolicitud,
+                CodigoSolicitud = solicitud.CodigoSolicitud,
+                CreadoPor = solicitud.CreadoPor,
+                SolicitadoPara = solicitud.SolicitadoPara,
+                Ubicacion = solicitud.Ubicacion,
+                Area = solicitud.Area,
+                Telefono = solicitud.Telefono,
+                ContactoArea = solicitud.ContactoArea,
+                Correo = solicitud.Correo,
+                TelefonoContactoArea = solicitud.TelefonoContactoArea,
+                TipoRegistro = solicitud.TipoRegistro,
+                Estado = solicitud.Estado,
+                Categoria = solicitud.Categoria,
+                Subcategoria = solicitud.Subcategoria,
+                Ocurrencia = solicitud.Ocurrencia,
+                CopiaJefatura = solicitud.CopiaJefatura,
+                FechaSolicitud = solicitud.FechaSolicitud,
+                AsignadoA = solicitud.AsignadoA,
+                FechaInicioAtencion = solicitud.FechaInicioAtencion,
+                FechaCaducidad = solicitud.FechaCaducidad,
+                Comentarios = solicitud.Comentarios.Select(comentario =>
+                    new SolicitudComentarioResponse
+                    {
+                        IdComentario = comentario.IdComentario,
+                        Comentario = comentario.Comentario,
+                        Tipo = comentario.Tipo,
+                        Usuario = comentario.Usuario,
+                        FechaRegistro = comentario.FechaRegistro
+                    }).ToList(),
+                CentroCosto = solicitud.CentroCosto,
+                NombreCentroCosto = solicitud.NombreCentroCosto,
+                Lugar = solicitud.Lugar
+            };
+        }
+
+        public async Task<SolicitudEnProcesoResponse> PasarAEnProcesoAsync(
+            SolicitudEnProcesoRequest request,
+            CancellationToken cancellationToken = default(CancellationToken))
+        {
+            if (request == null)
+            {
+                throw new ArgumentException(
+                    "El cuerpo de la solicitud es obligatorio.", "request");
+            }
+
+            if (string.IsNullOrWhiteSpace(request.CodigoSolicitud))
+            {
+                throw new ArgumentException(
+                    "El código de solicitud es obligatorio.",
+                    "CodigoSolicitud");
+            }
+
+            if (request.CodigoSolicitud.Trim().Length > 100)
+            {
+                throw new ArgumentException(
+                    "El código de solicitud no puede superar los 100 caracteres.",
+                    "CodigoSolicitud");
+            }
+
+            if (string.IsNullOrWhiteSpace(request.Usuario))
+            {
+                throw new ArgumentException(
+                    "El usuario es obligatorio.", "Usuario");
+            }
+
+            if (request.Usuario.Trim().Length > 100)
+            {
+                throw new ArgumentException(
+                    "El usuario no puede superar los 100 caracteres.",
+                    "Usuario");
+            }
+
+            return await repository.PasarAEnProcesoAsync(
+                request.CodigoSolicitud.Trim(),
+                request.Usuario.Trim(),
+                cancellationToken).ConfigureAwait(false);
         }
     }
 }

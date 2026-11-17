@@ -16,5 +16,10 @@ namespace SACIRI_backend.Interfaces
             string usuario,
             string flag,
             CancellationToken cancellationToken = default(CancellationToken));
+
+        Task<SolicitudEnProcesoResponse> PasarAEnProcesoAsync(
+            string codigoSolicitud,
+            string usuario,
+            CancellationToken cancellationToken = default(CancellationToken));
     }
 }

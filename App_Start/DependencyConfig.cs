@@ -12,7 +12,9 @@ namespace SACIRI_backend
 
         public static SolicitudService CreateSolicitudService()
         {
-            return new SolicitudService(new SqlSolicitudRepository());
+            return new SolicitudService(
+                new SqlSolicitudRepository(),
+                new SqlSolicitudPorCodigoRepository());
         }
 
         public static TipoRegistroService CreateTipoRegistroService()

@@ -103,5 +103,83 @@ namespace SACIRI_backend.Controllers
                     });
             }
         }
+
+        // GET /api/solicitudes/codigo/{codigoSolicitud}
+        [HttpGet]
+        [Route("codigo/{codigoSolicitud}")]
+        public async Task<IHttpActionResult> BuscarPorCodigo(
+            string codigoSolicitud,
+            CancellationToken cancellationToken)
+        {
+            try
+            {
+                var solicitud = await solicitudService.BuscarPorCodigoAsync(
+                    codigoSolicitud,
+                    cancellationToken);
+
+                if (solicitud == null)
+                {
+                    return Content(
+                        HttpStatusCode.NotFound,
+                        new ApiResponse<SolicitudPorCodigoResponse>
+                        {
+                            Status = (int)HttpStatusCode.NotFound,
+                            Message = "No se encontró la solicitud indicada.",
+                            Data = null
+                        });
+                }
+
+                return Ok(new ApiResponse<SolicitudPorCodigoResponse>
+                {
+                    Status = (int)HttpStatusCode.OK,
+                    Message = "Solicitud obtenida correctamente.",
+                    Data = solicitud
+                });
+            }
+            catch (ArgumentException exception)
+            {
+                return Content(
+                    HttpStatusCode.BadRequest,
+                    new ApiResponse<object>
+                    {
+                        Status = (int)HttpStatusCode.BadRequest,
+                        Message = exception.Message,
+                        Data = null
+                    });
+            }
+        }
+
+        // POST /api/solicitudes/en-proceso
+        [HttpPost]
+        [Route("en-proceso")]
+        public async Task<IHttpActionResult> PasarAEnProceso(
+            [FromBody] SolicitudEnProcesoRequest request,
+            CancellationToken cancellationToken)
+        {
+            try
+            {
+                var response = await solicitudService.PasarAEnProcesoAsync(
+                    request,
+                    cancellationToken);
+
+                return Ok(new ApiResponse<SolicitudEnProcesoResponse>
+                {
+                    Status = (int)HttpStatusCode.OK,
+                    Message = "La solicitud pasó a estado En Atención correctamente.",
+                    Data = response
+                });
+            }
+            catch (ArgumentException exception)
+            {
+                return Content(
+                    HttpStatusCode.BadRequest,
+                    new ApiResponse<object>
+                    {
+                        Status = (int)HttpStatusCode.BadRequest,
+                        Message = exception.Message,
+                        Data = null
+                    });
+            }
+        }
     }
 }

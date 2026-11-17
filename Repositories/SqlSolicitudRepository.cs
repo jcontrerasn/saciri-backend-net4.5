@@ -132,6 +132,45 @@ namespace SACIRI_backend.Repositories
             return solicitudes;
         }
 
+        public async Task<SolicitudEnProcesoResponse> PasarAEnProcesoAsync(
+            string codigoSolicitud,
+            string usuario,
+            CancellationToken cancellationToken = default(CancellationToken))
+        {
+            using (var connection = new SqlConnection(connectionString))
+            using (var command = new SqlCommand(
+                "pr_ciri_SolicitudEnProceso", connection))
+            {
+                command.CommandType = CommandType.StoredProcedure;
+                command.CommandTimeout = 30;
+                command.Parameters.Add(
+                    "@CodigoSolicitud", SqlDbType.VarChar, 100).Value =
+                    codigoSolicitud;
+                command.Parameters.Add(
+                    "@Usuario", SqlDbType.VarChar, 100).Value = usuario;
+
+                await connection.OpenAsync(cancellationToken)
+                    .ConfigureAwait(false);
+
+                using (var reader = await command.ExecuteReaderAsync(
+                    cancellationToken).ConfigureAwait(false))
+                {
+                    if (!await reader.ReadAsync(cancellationToken)
+                        .ConfigureAwait(false))
+                    {
+                        throw new InvalidOperationException(
+                            "El procedimiento no devolvió una respuesta.");
+                    }
+
+                    return new SolicitudEnProcesoResponse
+                    {
+                        Success = Convert.ToBoolean(reader["Success"]),
+                        Mensaje = Convert.ToString(reader["Mensaje"])
+                    };
+                }
+            }
+        }
+
         private static string LeerTexto(
             SqlDataReader reader,
             string columna)
