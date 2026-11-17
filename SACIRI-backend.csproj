@@ -154,8 +154,10 @@
     <Compile Include="Dtos\CentroCostoFiltroRequest.cs" />
     <Compile Include="Dtos\CentroCostoResponse.cs" />
     <Compile Include="Dtos\ActualizarCategoriaRequest.cs" />
+    <Compile Include="Dtos\ActualizarOcurrenciaRequest.cs" />
     <Compile Include="Dtos\ActualizarSubcategoriaRequest.cs" />
     <Compile Include="Dtos\CrearCategoriaRequest.cs" />
+    <Compile Include="Dtos\CrearOcurrenciaRequest.cs" />
     <Compile Include="Dtos\CrearSubcategoriaRequest.cs" />
     <Compile Include="Dtos\OcurrenciaResponse.cs" />
     <Compile Include="Dtos\SolicitudFlagRequest.cs" />
