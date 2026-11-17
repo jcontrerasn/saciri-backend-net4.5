@@ -1,0 +1,46 @@
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Build
+bin/
+obj/
+Debug/
+Release/
+x64/
+x86/
+
+# NuGet
+packages/
+*.nupkg
+*.nuget.props
+*.nuget.targets
+
+# Visual Studio / MSBuild
+*.csproj.user
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+
+# OS
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# VS Code
+.vscode/
+
+# ASP.NET temporary/generated files
+App_Data/*.mdf
+App_Data/*.ldf
+
+# Publish outputs
+Publish/
+publish/

@@ -21,3 +21,14 @@ lógica de negocio a una tecnología de datos específica.
 Los DTOs mantienen separado el contrato HTTP de las entidades del dominio.
 `ApiResponse<T>` proporciona un envoltorio común para respuestas que lo
 requieran.
+
+## Endpoint implementado
+
+`GET /api/usuarios/cuenta/{cuenta}` sigue este flujo:
+
+`UsuariosController -> UsuarioService -> IUsuarioRepository -> SqlUsuarioRepository -> pr_sm_BuscarUsuarioXCuenta`
+
+El repositorio envía el parámetro `Pcuenta_n` y mapea las columnas `Usuario`,
+`NombreCompleto` y `Area` a la entidad `Usuario`. El servicio transforma la
+entidad en `UsuarioCuentaResponse` y el controlador la devuelve dentro de
+`ApiResponse<T>`.
