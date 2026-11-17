@@ -29,6 +29,41 @@ namespace SACIRI_backend.Controllers
             this.categoriaService = categoriaService;
         }
 
+        // POST /api/categorias
+        [HttpPost]
+        [Route("")]
+        public async Task<IHttpActionResult> Crear(
+            [FromBody] CrearCategoriaRequest request,
+            CancellationToken cancellationToken)
+        {
+            try
+            {
+                var categoria = await categoriaService.CrearAsync(
+                    request,
+                    cancellationToken);
+
+                return Content(
+                    HttpStatusCode.Created,
+                    new ApiResponse<CategoriaResponse>
+                    {
+                        Status = (int)HttpStatusCode.Created,
+                        Message = "Categoría creada correctamente.",
+                        Data = categoria
+                    });
+            }
+            catch (ArgumentException exception)
+            {
+                return Content(
+                    HttpStatusCode.BadRequest,
+                    new ApiResponse<object>
+                    {
+                        Status = (int)HttpStatusCode.BadRequest,
+                        Message = exception.Message,
+                        Data = null
+                    });
+            }
+        }
+
         // GET /api/categorias/tipo-registro/{idTipoRegistro}
         [HttpGet]
         [Route("tipo-registro/{idTipoRegistro:int}")]

@@ -153,6 +153,7 @@
     <Compile Include="Dtos\CategoriaResponse.cs" />
     <Compile Include="Dtos\CentroCostoFiltroRequest.cs" />
     <Compile Include="Dtos\CentroCostoResponse.cs" />
+    <Compile Include="Dtos\CrearCategoriaRequest.cs" />
     <Compile Include="Dtos\OcurrenciaResponse.cs" />
     <Compile Include="Dtos\SolicitudFlagRequest.cs" />
     <Compile Include="Dtos\SolicitudFlagResponse.cs" />

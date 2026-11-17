@@ -40,6 +40,9 @@ consulta CIRI_Categorias junto con CIRI_TipoRegistros mediante
 CategoriasController -> CategoriaService -> ICategoriaRepository ->
 SqlCategoriaRepository.
 
+POST /api/categorias crea una categoría con IdTipoRegistro, Nombre y
+Descripcion y devuelve el registro creado con estado HTTP 201.
+
 ## Endpoint implementado: subcategorías por categoría
 
 GET /api/subcategorias/categoria/{idCategoria} valida el identificador y

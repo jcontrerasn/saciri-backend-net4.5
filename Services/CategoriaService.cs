@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using SACIRI_backend.Dtos;
+using SACIRI_backend.Entities;
 using SACIRI_backend.Interfaces;
 
 namespace SACIRI_backend.Services
@@ -22,6 +23,40 @@ namespace SACIRI_backend.Services
             this.repository = repository;
         }
 
+        public async Task<CategoriaResponse> CrearAsync(
+            CrearCategoriaRequest request,
+            CancellationToken cancellationToken = default(CancellationToken))
+        {
+            if (request == null)
+            {
+                throw new ArgumentException(
+                    "El cuerpo de la solicitud es obligatorio.", "request");
+            }
+
+            if (request.IdTipoRegistro <= 0)
+            {
+                throw new ArgumentException(
+                    "El identificador del tipo de registro debe ser mayor que cero.",
+                    "IdTipoRegistro");
+            }
+
+            if (string.IsNullOrWhiteSpace(request.Nombre))
+            {
+                throw new ArgumentException(
+                    "El nombre es obligatorio.", "Nombre");
+            }
+
+            var categoria = await repository.CrearAsync(
+                request.IdTipoRegistro,
+                request.Nombre.Trim(),
+                string.IsNullOrWhiteSpace(request.Descripcion)
+                    ? null
+                    : request.Descripcion.Trim(),
+                cancellationToken).ConfigureAwait(false);
+
+            return MapearRespuesta(categoria);
+        }
+
         public async Task<IList<CategoriaResponse>> ObtenerPorTipoRegistroAsync(
             int idTipoRegistro,
             CancellationToken cancellationToken = default(CancellationToken))
@@ -37,7 +72,12 @@ namespace SACIRI_backend.Services
                 idTipoRegistro,
                 cancellationToken).ConfigureAwait(false);
 
-            return categorias.Select(categoria => new CategoriaResponse
+            return categorias.Select(MapearRespuesta).ToList();
+        }
+
+        private static CategoriaResponse MapearRespuesta(Categoria categoria)
+        {
+            return new CategoriaResponse
             {
                 IdCategoria = categoria.IdCategoria,
                 TipoRegistro = categoria.TipoRegistro,
@@ -45,7 +85,7 @@ namespace SACIRI_backend.Services
                 Descripcion = categoria.Descripcion,
                 Activo = categoria.Activo,
                 FechaRegistro = categoria.FechaRegistro
-            }).ToList();
+            };
         }
     }
 }
