@@ -143,6 +143,9 @@
     <Compile Include="Controllers\HomeController.cs" />
     <Compile Include="Controllers\CategoriasController.cs" />
     <Compile Include="Controllers\CentrosCostoController.cs" />
+    <Compile Include="Controllers\ComentariosSolicitudesController.cs" />
+    <Compile Include="Controllers\DetalleSolicitudesController.cs" />
+    <Compile Include="Controllers\EstadosSolicitudController.cs" />
     <Compile Include="Controllers\OcurrenciasController.cs" />
     <Compile Include="Controllers\SolicitudesController.cs" />
     <Compile Include="Controllers\SubcategoriasController.cs" />
@@ -179,9 +182,15 @@
     <Compile Include="Dtos\ActualizarUsuarioRolRequest.cs" />
     <Compile Include="Dtos\UsuarioRolResponse.cs" />
     <Compile Include="Dtos\RolResponse.cs" />
+    <Compile Include="Dtos\ComentarioSolicitudResponse.cs" />
+    <Compile Include="Dtos\DetalleSolicitudResponse.cs" />
+    <Compile Include="Dtos\EstadoSolicitudResponse.cs" />
     <Compile Include="Entities\EntityBase.cs" />
     <Compile Include="Entities\Categoria.cs" />
     <Compile Include="Entities\CentroCosto.cs" />
+    <Compile Include="Entities\ComentarioSolicitud.cs" />
+    <Compile Include="Entities\DetalleSolicitud.cs" />
+    <Compile Include="Entities\EstadoSolicitud.cs" />
     <Compile Include="Entities\Ocurrencia.cs" />
     <Compile Include="Entities\SolicitudFlag.cs" />
     <Compile Include="Entities\SolicitudComentarioDetalle.cs" />
@@ -197,6 +206,9 @@
     <Compile Include="Interfaces\IRepository.cs" />
     <Compile Include="Interfaces\ICategoriaRepository.cs" />
     <Compile Include="Interfaces\ICentroCostoRepository.cs" />
+    <Compile Include="Interfaces\IComentarioSolicitudRepository.cs" />
+    <Compile Include="Interfaces\IDetalleSolicitudRepository.cs" />
+    <Compile Include="Interfaces\IEstadoSolicitudRepository.cs" />
     <Compile Include="Interfaces\IOcurrenciaRepository.cs" />
     <Compile Include="Interfaces\ISolicitudRepository.cs" />
     <Compile Include="Interfaces\ISolicitudPorCodigoRepository.cs" />
@@ -210,6 +222,9 @@
     <Compile Include="Repositories\SqlSolicitudPorCodigoRepository.cs" />
     <Compile Include="Repositories\SqlCategoriaRepository.cs" />
     <Compile Include="Repositories\SqlCentroCostoRepository.cs" />
+    <Compile Include="Repositories\SqlComentarioSolicitudRepository.cs" />
+    <Compile Include="Repositories\SqlDetalleSolicitudRepository.cs" />
+    <Compile Include="Repositories\SqlEstadoSolicitudRepository.cs" />
     <Compile Include="Repositories\SqlOcurrenciaRepository.cs" />
     <Compile Include="Repositories\SqlSubcategoriaRepository.cs" />
     <Compile Include="Repositories\SqlTipoRegistroRepository.cs" />
@@ -219,6 +234,9 @@
     <Compile Include="Services\SolicitudService.cs" />
     <Compile Include="Services\CategoriaService.cs" />
     <Compile Include="Services\CentroCostoService.cs" />
+    <Compile Include="Services\ComentarioSolicitudService.cs" />
+    <Compile Include="Services\DetalleSolicitudService.cs" />
+    <Compile Include="Services\EstadoSolicitudService.cs" />
     <Compile Include="Services\OcurrenciaService.cs" />
     <Compile Include="Services\SubcategoriaService.cs" />
     <Compile Include="Services\TipoRegistroService.cs" />

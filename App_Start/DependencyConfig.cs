@@ -20,6 +20,24 @@ namespace SACIRI_backend
             return new RolService(new SqlRolRepository());
         }
 
+        public static ComentarioSolicitudService CreateComentarioSolicitudService()
+        {
+            return new ComentarioSolicitudService(
+                new SqlComentarioSolicitudRepository());
+        }
+
+        public static EstadoSolicitudService CreateEstadoSolicitudService()
+        {
+            return new EstadoSolicitudService(
+                new SqlEstadoSolicitudRepository());
+        }
+
+        public static DetalleSolicitudService CreateDetalleSolicitudService()
+        {
+            return new DetalleSolicitudService(
+                new SqlDetalleSolicitudRepository());
+        }
+
         public static SolicitudService CreateSolicitudService()
         {
             return new SolicitudService(
