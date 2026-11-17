@@ -22,6 +22,17 @@ Los DTOs mantienen separado el contrato HTTP de las entidades del dominio.
 `ApiResponse<T>` proporciona un envoltorio común para respuestas que lo
 requieran.
 
+## Endpoint implementado: solicitudes por flag
+
+POST /api/solicitudes/flag recibe Usuario y Flag (CS, A o TMS) y sigue este
+flujo:
+
+SolicitudesController -> SolicitudService -> ISolicitudRepository ->
+SqlSolicitudRepository -> pr_ciri_ListarSolicitudesXFiltro
+
+La respuesta contiene una lista de SolicitudFlagResponse dentro de
+ApiResponse<T>.
+
 ## Endpoint implementado
 
 `GET /api/usuarios/cuenta/{cuenta}` sigue este flujo:

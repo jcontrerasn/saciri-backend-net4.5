@@ -9,5 +9,10 @@ namespace SACIRI_backend
         {
             return new UsuarioService(new SqlUsuarioRepository());
         }
+
+        public static SolicitudService CreateSolicitudService()
+        {
+            return new SolicitudService(new SqlSolicitudRepository());
+        }
     }
 }
