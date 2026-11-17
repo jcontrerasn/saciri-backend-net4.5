@@ -29,6 +29,41 @@ namespace SACIRI_backend.Controllers
             this.solicitudService = solicitudService;
         }
 
+        // POST /api/solicitudes
+        [HttpPost]
+        [Route("")]
+        public async Task<IHttpActionResult> Registrar(
+            [FromBody] RegistrarSolicitudRequest request,
+            CancellationToken cancellationToken)
+        {
+            try
+            {
+                var response = await solicitudService.RegistrarAsync(
+                    request,
+                    cancellationToken);
+
+                return Content(
+                    HttpStatusCode.Created,
+                    new ApiResponse<RegistrarSolicitudResponse>
+                    {
+                        Status = (int)HttpStatusCode.Created,
+                        Message = "Solicitud registrada correctamente.",
+                        Data = response
+                    });
+            }
+            catch (ArgumentException exception)
+            {
+                return Content(
+                    HttpStatusCode.BadRequest,
+                    new ApiResponse<object>
+                    {
+                        Status = (int)HttpStatusCode.BadRequest,
+                        Message = exception.Message,
+                        Data = null
+                    });
+            }
+        }
+
         // POST /api/solicitudes/flag
         [HttpPost]
         [Route("flag")]

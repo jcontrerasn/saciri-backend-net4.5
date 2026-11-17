@@ -157,6 +157,8 @@
     <Compile Include="Dtos\OcurrenciaResponse.cs" />
     <Compile Include="Dtos\SolicitudFlagRequest.cs" />
     <Compile Include="Dtos\SolicitudFlagResponse.cs" />
+    <Compile Include="Dtos\RegistrarSolicitudRequest.cs" />
+    <Compile Include="Dtos\RegistrarSolicitudResponse.cs" />
     <Compile Include="Dtos\SubcategoriaResponse.cs" />
     <Compile Include="Dtos\TipoRegistroResponse.cs" />
     <Compile Include="Dtos\UsuarioCuentaResponse.cs" />

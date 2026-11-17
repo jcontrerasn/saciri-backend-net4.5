@@ -22,6 +22,50 @@ namespace SACIRI_backend.Services
             this.repository = repository;
         }
 
+        public async Task<RegistrarSolicitudResponse> RegistrarAsync(
+            RegistrarSolicitudRequest request,
+            CancellationToken cancellationToken = default(CancellationToken))
+        {
+            if (request == null)
+            {
+                throw new ArgumentException(
+                    "El cuerpo de la solicitud es obligatorio.", "request");
+            }
+
+            if (string.IsNullOrWhiteSpace(request.CreadoPor))
+            {
+                throw new ArgumentException(
+                    "El campo CreadoPor es obligatorio.", "CreadoPor");
+            }
+
+            if (string.IsNullOrWhiteSpace(request.CentroCosto))
+            {
+                throw new ArgumentException(
+                    "El campo CentroCosto es obligatorio.", "CentroCosto");
+            }
+
+            if (string.IsNullOrWhiteSpace(request.Lugar))
+            {
+                throw new ArgumentException(
+                    "El campo Lugar es obligatorio.", "Lugar");
+            }
+
+            if (string.IsNullOrWhiteSpace(request.Descripcion))
+            {
+                throw new ArgumentException(
+                    "El campo Descripcion es obligatorio.", "Descripcion");
+            }
+
+            var codigoSolicitud = await repository.RegistrarAsync(
+                request,
+                cancellationToken).ConfigureAwait(false);
+
+            return new RegistrarSolicitudResponse
+            {
+                CodigoSolicitud = codigoSolicitud
+            };
+        }
+
         public async Task<IList<SolicitudFlagResponse>> ObtenerFlagAsync(
             string usuario,
             string flag,
