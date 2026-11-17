@@ -33,6 +33,34 @@ SqlSolicitudRepository -> pr_ciri_ListarSolicitudesXFiltro
 La respuesta contiene una lista de SolicitudFlagResponse dentro de
 ApiResponse<T>.
 
+## Endpoint implementado: categorías por tipo de registro
+
+GET /api/categorias/tipo-registro/{idTipoRegistro} valida el identificador y
+consulta CIRI_Categorias junto con CIRI_TipoRegistros mediante
+CategoriasController -> CategoriaService -> ICategoriaRepository ->
+SqlCategoriaRepository.
+
+## Endpoint implementado: subcategorías por categoría
+
+GET /api/subcategorias/categoria/{idCategoria} valida el identificador y
+consulta dbo.CIRI_Subcategorias mediante
+SubcategoriasController -> SubcategoriaService -> ISubcategoriaRepository ->
+SqlSubcategoriaRepository.
+
+## Endpoint implementado: ocurrencias por subcategoría
+
+GET /api/ocurrencias/subcategoria/{idSubcategoria} valida el identificador y
+consulta dbo.CIRI_Ocurrencias mediante
+OcurrenciasController -> OcurrenciaService -> IOcurrenciaRepository ->
+SqlOcurrenciaRepository.
+
+## Endpoint implementado: tipos de registro
+
+GET /api/tipos-registros consulta dbo.CIRI_TipoRegistros mediante
+TipoRegistrosController -> TipoRegistroService -> ITipoRegistroRepository ->
+SqlTipoRegistroRepository y devuelve TipoRegistroResponse dentro de
+ApiResponse<T>.
+
 ## Endpoint implementado
 
 `GET /api/usuarios/cuenta/{cuenta}` sigue este flujo:

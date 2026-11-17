@@ -14,5 +14,25 @@ namespace SACIRI_backend
         {
             return new SolicitudService(new SqlSolicitudRepository());
         }
+
+        public static TipoRegistroService CreateTipoRegistroService()
+        {
+            return new TipoRegistroService(new SqlTipoRegistroRepository());
+        }
+
+        public static CategoriaService CreateCategoriaService()
+        {
+            return new CategoriaService(new SqlCategoriaRepository());
+        }
+
+        public static SubcategoriaService CreateSubcategoriaService()
+        {
+            return new SubcategoriaService(new SqlSubcategoriaRepository());
+        }
+
+        public static OcurrenciaService CreateOcurrenciaService()
+        {
+            return new OcurrenciaService(new SqlOcurrenciaRepository());
+        }
     }
 }
