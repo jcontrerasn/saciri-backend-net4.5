@@ -75,6 +75,54 @@ namespace SACIRI_backend.Services
             return categorias.Select(MapearRespuesta).ToList();
         }
 
+        public async Task<IList<CategoriaResponse>> ObtenerTodasAsync(
+            CancellationToken cancellationToken = default(CancellationToken))
+        {
+            var categorias = await repository.ObtenerTodasAsync(
+                cancellationToken).ConfigureAwait(false);
+
+            return categorias.Select(MapearRespuesta).ToList();
+        }
+
+        public async Task<CategoriaResponse> ActualizarAsync(
+            int idCategoria,
+            ActualizarCategoriaRequest request,
+            CancellationToken cancellationToken = default(CancellationToken))
+        {
+            if (request == null)
+            {
+                throw new ArgumentException(
+                    "El cuerpo de la solicitud es obligatorio.", "request");
+            }
+
+            if (string.IsNullOrWhiteSpace(request.Nombre))
+            {
+                throw new ArgumentException(
+                    "El nombre es obligatorio.", "Nombre");
+            }
+
+            var categoria = await repository.ActualizarAsync(
+                idCategoria,
+                request.Nombre.Trim(),
+                string.IsNullOrWhiteSpace(request.Descripcion)
+                    ? null
+                    : request.Descripcion.Trim(),
+                cancellationToken).ConfigureAwait(false);
+
+            return categoria == null ? null : MapearRespuesta(categoria);
+        }
+
+        public async Task<CategoriaResponse> CambiarEstadoAsync(
+            int idCategoria,
+            CancellationToken cancellationToken = default(CancellationToken))
+        {
+            var categoria = await repository.CambiarEstadoAsync(
+                idCategoria,
+                cancellationToken).ConfigureAwait(false);
+
+            return categoria == null ? null : MapearRespuesta(categoria);
+        }
+
         private static CategoriaResponse MapearRespuesta(Categoria categoria)
         {
             return new CategoriaResponse

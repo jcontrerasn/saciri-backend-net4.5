@@ -13,8 +13,21 @@ namespace SACIRI_backend.Interfaces
             string descripcion,
             CancellationToken cancellationToken = default(CancellationToken));
 
+        Task<IList<Categoria>> ObtenerTodasAsync(
+            CancellationToken cancellationToken = default(CancellationToken));
+
         Task<IList<Categoria>> ObtenerPorTipoRegistroAsync(
             int idTipoRegistro,
+            CancellationToken cancellationToken = default(CancellationToken));
+
+        Task<Categoria> ActualizarAsync(
+            int idCategoria,
+            string nombre,
+            string descripcion,
+            CancellationToken cancellationToken = default(CancellationToken));
+
+        Task<Categoria> CambiarEstadoAsync(
+            int idCategoria,
             CancellationToken cancellationToken = default(CancellationToken));
     }
 }

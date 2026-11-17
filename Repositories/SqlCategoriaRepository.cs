@@ -95,6 +95,44 @@ namespace SACIRI_backend.Repositories
                 "No se pudo recuperar la categoría creada.");
         }
 
+        public async Task<IList<Categoria>> ObtenerTodasAsync(
+            CancellationToken cancellationToken = default(CancellationToken))
+        {
+            var categorias = new List<Categoria>();
+
+            using (var connection = new SqlConnection(connectionString))
+            using (var command = new SqlCommand(
+                "SELECT categoria.IdCategoria, "
+                + "categoria.IdTipoRegistro, "
+                + "tipoRegistro.Nombre AS TipoRegistro, "
+                + "categoria.Nombre, categoria.Descripcion, "
+                + "categoria.Activo, categoria.FechaRegistro "
+                + "FROM dbo.CIRI_Categorias AS categoria "
+                + "INNER JOIN dbo.CIRI_TipoRegistros AS tipoRegistro "
+                + "ON tipoRegistro.IdTipoRegistro = categoria.IdTipoRegistro "
+                + "ORDER BY categoria.IdCategoria",
+                connection))
+            {
+                command.CommandType = CommandType.Text;
+                command.CommandTimeout = 30;
+
+                await connection.OpenAsync(cancellationToken)
+                    .ConfigureAwait(false);
+
+                using (var reader = await command.ExecuteReaderAsync(
+                    cancellationToken).ConfigureAwait(false))
+                {
+                    while (await reader.ReadAsync(cancellationToken)
+                        .ConfigureAwait(false))
+                    {
+                        categorias.Add(LeerCategoria(reader));
+                    }
+                }
+            }
+
+            return categorias;
+        }
+
         public async Task<IList<Categoria>> ObtenerPorTipoRegistroAsync(
             int idTipoRegistro,
             CancellationToken cancellationToken = default(CancellationToken))
@@ -135,6 +173,114 @@ namespace SACIRI_backend.Repositories
             }
 
             return categorias;
+        }
+
+        public async Task<Categoria> ActualizarAsync(
+            int idCategoria,
+            string nombre,
+            string descripcion,
+            CancellationToken cancellationToken = default(CancellationToken))
+        {
+            using (var connection = new SqlConnection(connectionString))
+            {
+                await connection.OpenAsync(cancellationToken)
+                    .ConfigureAwait(false);
+
+                using (var command = new SqlCommand(
+                    "UPDATE dbo.CIRI_Categorias "
+                    + "SET Nombre = @Nombre, Descripcion = @Descripcion "
+                    + "WHERE IdCategoria = @IdCategoria",
+                    connection))
+                {
+                    command.CommandType = CommandType.Text;
+                    command.CommandTimeout = 30;
+                    command.Parameters.Add(
+                        "@Nombre", SqlDbType.NVarChar, 100).Value = nombre;
+                    command.Parameters.Add(
+                        "@Descripcion", SqlDbType.NVarChar, 250).Value =
+                        (object)descripcion ?? DBNull.Value;
+                    command.Parameters.Add(
+                        "@IdCategoria", SqlDbType.Int).Value = idCategoria;
+
+                    if (await command.ExecuteNonQueryAsync(
+                        cancellationToken).ConfigureAwait(false) == 0)
+                    {
+                        return null;
+                    }
+                }
+
+                return await ObtenerPorIdAsync(
+                    connection,
+                    idCategoria,
+                    cancellationToken).ConfigureAwait(false);
+            }
+        }
+
+        public async Task<Categoria> CambiarEstadoAsync(
+            int idCategoria,
+            CancellationToken cancellationToken = default(CancellationToken))
+        {
+            using (var connection = new SqlConnection(connectionString))
+            {
+                await connection.OpenAsync(cancellationToken)
+                    .ConfigureAwait(false);
+
+                using (var command = new SqlCommand(
+                    "UPDATE dbo.CIRI_Categorias "
+                    + "SET Activo = CASE WHEN Activo = 1 THEN 0 ELSE 1 END "
+                    + "WHERE IdCategoria = @IdCategoria",
+                    connection))
+                {
+                    command.CommandType = CommandType.Text;
+                    command.CommandTimeout = 30;
+                    command.Parameters.Add(
+                        "@IdCategoria", SqlDbType.Int).Value = idCategoria;
+
+                    if (await command.ExecuteNonQueryAsync(
+                        cancellationToken).ConfigureAwait(false) == 0)
+                    {
+                        return null;
+                    }
+                }
+
+                return await ObtenerPorIdAsync(
+                    connection,
+                    idCategoria,
+                    cancellationToken).ConfigureAwait(false);
+            }
+        }
+
+        private static async Task<Categoria> ObtenerPorIdAsync(
+            SqlConnection connection,
+            int idCategoria,
+            CancellationToken cancellationToken)
+        {
+            using (var command = new SqlCommand(
+                "SELECT categoria.IdCategoria, "
+                + "categoria.IdTipoRegistro, "
+                + "tipoRegistro.Nombre AS TipoRegistro, "
+                + "categoria.Nombre, categoria.Descripcion, "
+                + "categoria.Activo, categoria.FechaRegistro "
+                + "FROM dbo.CIRI_Categorias AS categoria "
+                + "INNER JOIN dbo.CIRI_TipoRegistros AS tipoRegistro "
+                + "ON tipoRegistro.IdTipoRegistro = categoria.IdTipoRegistro "
+                + "WHERE categoria.IdCategoria = @IdCategoria",
+                connection))
+            {
+                command.CommandType = CommandType.Text;
+                command.CommandTimeout = 30;
+                command.Parameters.Add(
+                    "@IdCategoria", SqlDbType.Int).Value = idCategoria;
+
+                using (var reader = await command.ExecuteReaderAsync(
+                    cancellationToken).ConfigureAwait(false))
+                {
+                    return await reader.ReadAsync(cancellationToken)
+                        .ConfigureAwait(false)
+                        ? LeerCategoria(reader)
+                        : null;
+                }
+            }
         }
 
         private static Categoria LeerCategoria(SqlDataReader reader)
