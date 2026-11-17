@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using SACIRI_backend.Dtos;
@@ -44,6 +46,33 @@ namespace SACIRI_backend.Services
                 NombreCompleto = usuario.NombreCompleto,
                 Area = usuario.Area
             };
+        }
+
+        public async Task<IList<UsuarioFiltroResponse>> BuscarPorFiltroAsync(
+            string filtro,
+            CancellationToken cancellationToken = default(CancellationToken))
+        {
+            if (string.IsNullOrWhiteSpace(filtro))
+            {
+                throw new ArgumentException(
+                    "El filtro es obligatorio.", "filtro");
+            }
+
+            var usuarios = await repository.BuscarPorFiltroAsync(
+                filtro.Trim(), cancellationToken).ConfigureAwait(false);
+
+            return usuarios.Select(usuario => new UsuarioFiltroResponse
+            {
+                Usuario = usuario.Cuenta,
+                NombreCompleto = usuario.NombreCompleto,
+                Ubicacion = usuario.Ubicacion,
+                Area = usuario.Area,
+                CentroCosto = usuario.CentroCosto,
+                Telefono = usuario.Telefono,
+                Correo = usuario.Correo,
+                ContactoArea = usuario.ContactoArea,
+                TelefonoContactoArea = usuario.TelefonoContactoArea
+            }).ToList();
         }
     }
 }

@@ -54,6 +54,19 @@ consulta dbo.CIRI_Ocurrencias mediante
 OcurrenciasController -> OcurrenciaService -> IOcurrenciaRepository ->
 SqlOcurrenciaRepository.
 
+## Endpoint implementado: centros de costo
+
+POST /api/centros-costo recibe Pfiltro_c y consulta
+pr_sm_ListarCentroCostoXFiltro mediante
+CentrosCostoController -> CentroCostoService -> ICentroCostoRepository ->
+SqlCentroCostoRepository.
+
+## Endpoint implementado: búsqueda de usuarios
+
+POST /api/usuarios/filtro recibe Pfiltro_c y consulta
+pr_sm_ListarUsuarioXFiltro mediante UsuariosController -> UsuarioService ->
+IUsuarioRepository -> SqlUsuarioRepository.
+
 ## Endpoint implementado: tipos de registro
 
 GET /api/tipos-registros consulta dbo.CIRI_TipoRegistros mediante

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
@@ -61,6 +62,53 @@ namespace SACIRI_backend.Repositories
                     };
                 }
             }
+        }
+
+        public async Task<IList<Usuario>> BuscarPorFiltroAsync(
+            string filtro,
+            CancellationToken cancellationToken = default(CancellationToken))
+        {
+            var usuarios = new List<Usuario>();
+
+            using (var connection = new SqlConnection(connectionString))
+            using (var command = new SqlCommand(
+                "pr_sm_ListarUsuarioXFiltro", connection))
+            {
+                command.CommandType = CommandType.StoredProcedure;
+                command.CommandTimeout = 30;
+                command.Parameters.Add(
+                    "Pfiltro_c", SqlDbType.VarChar, 50).Value = filtro;
+
+                await connection.OpenAsync(cancellationToken)
+                    .ConfigureAwait(false);
+
+                using (var reader = await command.ExecuteReaderAsync(
+                    cancellationToken).ConfigureAwait(false))
+                {
+                    while (await reader.ReadAsync(cancellationToken)
+                        .ConfigureAwait(false))
+                    {
+                        usuarios.Add(new Usuario
+                        {
+                            Cuenta = LeerTexto(reader, "Usuario"),
+                            NombreCompleto = LeerTexto(
+                                reader, "NombreCompleto"),
+                            Ubicacion = LeerTexto(reader, "Ubicación"),
+                            Area = LeerTexto(reader, "Area"),
+                            CentroCosto = LeerTexto(
+                                reader, "CentroCosto"),
+                            Telefono = LeerTexto(reader, "Telefono"),
+                            Correo = LeerTexto(reader, "Correo"),
+                            ContactoArea = LeerTexto(
+                                reader, "ContactoArea"),
+                            TelefonoContactoArea = LeerTexto(
+                                reader, "TelefonoContactoArea")
+                        });
+                    }
+                }
+            }
+
+            return usuarios;
         }
 
         private static string LeerTexto(

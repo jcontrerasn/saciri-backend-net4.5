@@ -34,5 +34,10 @@ namespace SACIRI_backend
         {
             return new OcurrenciaService(new SqlOcurrenciaRepository());
         }
+
+        public static CentroCostoService CreateCentroCostoService()
+        {
+            return new CentroCostoService(new SqlCentroCostoRepository());
+        }
     }
 }

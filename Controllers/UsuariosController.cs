@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
@@ -57,6 +58,44 @@ namespace SACIRI_backend.Controllers
                     Status = (int)HttpStatusCode.OK,
                     Message = "Usuario obtenido correctamente.",
                     Data = usuario
+                });
+            }
+            catch (ArgumentException exception)
+            {
+                return Content(
+                    HttpStatusCode.BadRequest,
+                    new ApiResponse<object>
+                    {
+                        Status = (int)HttpStatusCode.BadRequest,
+                        Message = exception.Message,
+                        Data = null
+                    });
+            }
+        }
+
+        // POST /api/usuarios/filtro
+        [HttpPost]
+        [Route("filtro")]
+        public async Task<IHttpActionResult> BuscarPorFiltro(
+            [FromBody] UsuarioFiltroRequest request,
+            CancellationToken cancellationToken)
+        {
+            try
+            {
+                if (request == null)
+                {
+                    throw new ArgumentException(
+                        "El cuerpo de la solicitud es obligatorio.", "request");
+                }
+
+                var usuarios = await usuarioService.BuscarPorFiltroAsync(
+                    request.Pfiltro_c, cancellationToken);
+
+                return Ok(new ApiResponse<List<UsuarioFiltroResponse>>
+                {
+                    Status = (int)HttpStatusCode.OK,
+                    Message = "Usuarios obtenidos correctamente.",
+                    Data = new List<UsuarioFiltroResponse>(usuarios)
                 });
             }
             catch (ArgumentException exception)
