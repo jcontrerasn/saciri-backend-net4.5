@@ -10,6 +10,16 @@ namespace SACIRI_backend
             return new UsuarioService(new SqlUsuarioRepository());
         }
 
+        public static UsuarioRolService CreateUsuarioRolService()
+        {
+            return new UsuarioRolService(new SqlUsuarioRolRepository());
+        }
+
+        public static RolService CreateRolService()
+        {
+            return new RolService(new SqlRolRepository());
+        }
+
         public static SolicitudService CreateSolicitudService()
         {
             return new SolicitudService(

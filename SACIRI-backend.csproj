@@ -147,7 +147,9 @@
     <Compile Include="Controllers\SolicitudesController.cs" />
     <Compile Include="Controllers\SubcategoriasController.cs" />
     <Compile Include="Controllers\TipoRegistrosController.cs" />
+    <Compile Include="Controllers\RolesController.cs" />
     <Compile Include="Controllers\UsuariosController.cs" />
+    <Compile Include="Controllers\UsuariosRolesController.cs" />
     <Compile Include="Controllers\ValuesController.cs" />
     <Compile Include="Dtos\ApiResponse.cs" />
     <Compile Include="Dtos\CategoriaResponse.cs" />
@@ -173,6 +175,10 @@
     <Compile Include="Dtos\UsuarioCuentaResponse.cs" />
     <Compile Include="Dtos\UsuarioFiltroRequest.cs" />
     <Compile Include="Dtos\UsuarioFiltroResponse.cs" />
+    <Compile Include="Dtos\CrearUsuarioRolRequest.cs" />
+    <Compile Include="Dtos\ActualizarUsuarioRolRequest.cs" />
+    <Compile Include="Dtos\UsuarioRolResponse.cs" />
+    <Compile Include="Dtos\RolResponse.cs" />
     <Compile Include="Entities\EntityBase.cs" />
     <Compile Include="Entities\Categoria.cs" />
     <Compile Include="Entities\CentroCosto.cs" />
@@ -180,9 +186,11 @@
     <Compile Include="Entities\SolicitudFlag.cs" />
     <Compile Include="Entities\SolicitudComentarioDetalle.cs" />
     <Compile Include="Entities\SolicitudPorCodigo.cs" />
+    <Compile Include="Entities\Rol.cs" />
     <Compile Include="Entities\Subcategoria.cs" />
     <Compile Include="Entities\TipoRegistro.cs" />
     <Compile Include="Entities\Usuario.cs" />
+    <Compile Include="Entities\UsuarioRol.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
@@ -195,6 +203,8 @@
     <Compile Include="Interfaces\ISubcategoriaRepository.cs" />
     <Compile Include="Interfaces\ITipoRegistroRepository.cs" />
     <Compile Include="Interfaces\IUsuarioRepository.cs" />
+    <Compile Include="Interfaces\IUsuarioRolRepository.cs" />
+    <Compile Include="Interfaces\IRolRepository.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Repositories\SqlSolicitudRepository.cs" />
     <Compile Include="Repositories\SqlSolicitudPorCodigoRepository.cs" />
@@ -204,6 +214,8 @@
     <Compile Include="Repositories\SqlSubcategoriaRepository.cs" />
     <Compile Include="Repositories\SqlTipoRegistroRepository.cs" />
     <Compile Include="Repositories\SqlUsuarioRepository.cs" />
+    <Compile Include="Repositories\SqlUsuarioRolRepository.cs" />
+    <Compile Include="Repositories\SqlRolRepository.cs" />
     <Compile Include="Services\SolicitudService.cs" />
     <Compile Include="Services\CategoriaService.cs" />
     <Compile Include="Services\CentroCostoService.cs" />
@@ -211,6 +223,8 @@
     <Compile Include="Services\SubcategoriaService.cs" />
     <Compile Include="Services\TipoRegistroService.cs" />
     <Compile Include="Services\UsuarioService.cs" />
+    <Compile Include="Services\UsuarioRolService.cs" />
+    <Compile Include="Services\RolService.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Areas\HelpPage\HelpPage.css" />
