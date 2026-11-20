@@ -38,6 +38,17 @@ namespace SACIRI_backend
                 new SqlDetalleSolicitudRepository());
         }
 
+        public static HistorialSolicitudService CreateHistorialSolicitudService()
+        {
+            return new HistorialSolicitudService(
+                new SqlHistorialSolicitudRepository());
+        }
+
+        public static CatSubOcuService CreateCatSubOcuService()
+        {
+            return new CatSubOcuService(new SqlCatSubOcuRepository());
+        }
+
         public static SolicitudService CreateSolicitudService()
         {
             return new SolicitudService(

@@ -42,26 +42,10 @@ namespace SACIRI_backend.Repositories
 
                 AgregarTexto(command, "@SolicitadoPara", 100, request.SolicitadoPara);
                 AgregarTexto(command, "@CreadoPor", 100, request.CreadoPor);
-                AgregarEntero(command, "@IdEstadoSolicitud", request.IdEstadoSolicitud);
                 AgregarEntero(command, "@IdTipoRegistro", request.IdTipoRegistro);
                 AgregarEntero(command, "@IdCategoria", request.IdCategoria);
                 AgregarEntero(command, "@IdSubcategoria", request.IdSubcategoria);
                 AgregarEntero(command, "@IdOcurrencia", request.IdOcurrencia);
-                AgregarTexto(command, "@Prioridad", 50, request.Prioridad);
-                AgregarTexto(command, "@AsignadoA", 100, request.AsignadoA);
-                AgregarFecha(command, "@FechaSolicitud", request.FechaSolicitud);
-                AgregarFecha(command, "@FechaInicio", request.FechaInicio);
-                AgregarFecha(command, "@FechaCaducidad", request.FechaCaducidad);
-                AgregarFecha(command, "@FechaFinAtencion", request.FechaFinAtencion);
-                AgregarEntero(command, "@DuracionAtencion", request.DuracionAtencion);
-                AgregarTexto(command, "@CopiaJefatura", 100, request.CopiaJefatura);
-                AgregarTexto(command, "@JefeAprobador", 100, request.JefeAprobador);
-                AgregarTexto(command, "@EstadoAprobacion", 100, request.EstadoAprobacion);
-                AgregarTexto(command, "@UsuarioAprobacion", 100, request.UsuarioAprobacion);
-                AgregarFecha(command, "@FechaAprobacion", request.FechaAprobacion);
-                AgregarEntero(command, "@Nivel", request.Nivel);
-                AgregarTexto(command, "@ProblemaMasivo", 2, request.ProblemaMasivo);
-                AgregarTexto(command, "@CCSolicitadoPara", 100, request.CCSolicitadoPara);
                 AgregarTexto(command, "@CentroCosto", 50, request.CentroCosto);
                 AgregarTexto(command, "@Lugar", 200, request.Lugar);
                 AgregarTextoLargo(command, "@Descripcion", request.Descripcion);
@@ -148,6 +132,276 @@ namespace SACIRI_backend.Repositories
                     codigoSolicitud;
                 command.Parameters.Add(
                     "@Usuario", SqlDbType.VarChar, 100).Value = usuario;
+
+                await connection.OpenAsync(cancellationToken)
+                    .ConfigureAwait(false);
+
+                using (var reader = await command.ExecuteReaderAsync(
+                    cancellationToken).ConfigureAwait(false))
+                {
+                    if (!await reader.ReadAsync(cancellationToken)
+                        .ConfigureAwait(false))
+                    {
+                        throw new InvalidOperationException(
+                            "El procedimiento no devolvió una respuesta.");
+                    }
+
+                    return new SolicitudEnProcesoResponse
+                    {
+                        Success = Convert.ToBoolean(reader["Success"]),
+                        Mensaje = Convert.ToString(reader["Mensaje"])
+                    };
+                }
+            }
+        }
+
+        public async Task<SolicitudEnProcesoResponse> SolicitarInformacionAsync(
+            int idSolicitud,
+            string comentario,
+            string usuario,
+            CancellationToken cancellationToken = default(CancellationToken))
+        {
+            using (var connection = new SqlConnection(connectionString))
+            using (var command = new SqlCommand(
+                "pr_ciri_SolicitarInformacion", connection))
+            {
+                command.CommandType = CommandType.StoredProcedure;
+                command.CommandTimeout = 30;
+                command.Parameters.Add(
+                    "@IdSolicitud", SqlDbType.Int).Value = idSolicitud;
+                command.Parameters.Add(new SqlParameter(
+                    "@Comentario", SqlDbType.NVarChar, -1)
+                {
+                    Value = comentario
+                });
+                command.Parameters.Add(
+                    "@Usuario", SqlDbType.VarChar, 100).Value = usuario;
+
+                await connection.OpenAsync(cancellationToken)
+                    .ConfigureAwait(false);
+
+                using (var reader = await command.ExecuteReaderAsync(
+                    cancellationToken).ConfigureAwait(false))
+                {
+                    if (!await reader.ReadAsync(cancellationToken)
+                        .ConfigureAwait(false))
+                    {
+                        throw new InvalidOperationException(
+                            "El procedimiento no devolvió una respuesta.");
+                    }
+
+                    return new SolicitudEnProcesoResponse
+                    {
+                        Success = Convert.ToBoolean(reader["Success"]),
+                        Mensaje = Convert.ToString(reader["Mensaje"])
+                    };
+                }
+            }
+        }
+
+        public async Task<SolicitudEnProcesoResponse> EnviarInformacionAsync(
+            int idSolicitud,
+            string comentario,
+            string usuario,
+            CancellationToken cancellationToken = default(CancellationToken))
+        {
+            using (var connection = new SqlConnection(connectionString))
+            using (var command = new SqlCommand(
+                "pr_ciri_EnviarInformacion", connection))
+            {
+                command.CommandType = CommandType.StoredProcedure;
+                command.CommandTimeout = 30;
+                command.Parameters.Add(
+                    "@IdSolicitud", SqlDbType.Int).Value = idSolicitud;
+                command.Parameters.Add(new SqlParameter(
+                    "@Comentario", SqlDbType.NVarChar, -1)
+                {
+                    Value = comentario
+                });
+                command.Parameters.Add(
+                    "@Usuario", SqlDbType.VarChar, 100).Value = usuario;
+
+                await connection.OpenAsync(cancellationToken)
+                    .ConfigureAwait(false);
+
+                using (var reader = await command.ExecuteReaderAsync(
+                    cancellationToken).ConfigureAwait(false))
+                {
+                    if (!await reader.ReadAsync(cancellationToken)
+                        .ConfigureAwait(false))
+                    {
+                        throw new InvalidOperationException(
+                            "El procedimiento no devolvió una respuesta.");
+                    }
+
+                    return new SolicitudEnProcesoResponse
+                    {
+                        Success = Convert.ToBoolean(reader["Success"]),
+                        Mensaje = Convert.ToString(reader["Mensaje"])
+                    };
+                }
+            }
+        }
+
+        public async Task<SolicitudEnProcesoResponse> AnularSolicitudAsync(
+            int idSolicitud,
+            string comentario,
+            string usuario,
+            CancellationToken cancellationToken = default(CancellationToken))
+        {
+            using (var connection = new SqlConnection(connectionString))
+            using (var command = new SqlCommand(
+                "pr_ciri_AnularSolicitud", connection))
+            {
+                command.CommandType = CommandType.StoredProcedure;
+                command.CommandTimeout = 30;
+                command.Parameters.Add(
+                    "@IdSolicitud", SqlDbType.Int).Value = idSolicitud;
+                command.Parameters.Add(new SqlParameter(
+                    "@Comentario", SqlDbType.NVarChar, -1)
+                {
+                    Value = comentario
+                });
+                command.Parameters.Add(
+                    "@Usuario", SqlDbType.VarChar, 100).Value = usuario;
+
+                await connection.OpenAsync(cancellationToken)
+                    .ConfigureAwait(false);
+
+                using (var reader = await command.ExecuteReaderAsync(
+                    cancellationToken).ConfigureAwait(false))
+                {
+                    if (!await reader.ReadAsync(cancellationToken)
+                        .ConfigureAwait(false))
+                    {
+                        throw new InvalidOperationException(
+                            "El procedimiento no devolvió una respuesta.");
+                    }
+
+                    return new SolicitudEnProcesoResponse
+                    {
+                        Success = Convert.ToBoolean(reader["Success"]),
+                        Mensaje = Convert.ToString(reader["Mensaje"])
+                    };
+                }
+            }
+        }
+
+        public async Task<SolicitudEnProcesoResponse> FinalizarSolicitudAsync(
+            int idSolicitud,
+            string comentario,
+            string usuario,
+            CancellationToken cancellationToken = default(CancellationToken))
+        {
+            using (var connection = new SqlConnection(connectionString))
+            using (var command = new SqlCommand(
+                "pr_ciri_FinalizarSolicitud", connection))
+            {
+                command.CommandType = CommandType.StoredProcedure;
+                command.CommandTimeout = 30;
+                command.Parameters.Add(
+                    "@IdSolicitud", SqlDbType.Int).Value = idSolicitud;
+                command.Parameters.Add(new SqlParameter(
+                    "@Comentario", SqlDbType.NVarChar, -1)
+                {
+                    Value = comentario
+                });
+                command.Parameters.Add(
+                    "@Usuario", SqlDbType.VarChar, 100).Value = usuario;
+
+                await connection.OpenAsync(cancellationToken)
+                    .ConfigureAwait(false);
+
+                using (var reader = await command.ExecuteReaderAsync(
+                    cancellationToken).ConfigureAwait(false))
+                {
+                    if (!await reader.ReadAsync(cancellationToken)
+                        .ConfigureAwait(false))
+                    {
+                        throw new InvalidOperationException(
+                            "El procedimiento no devolvió una respuesta.");
+                    }
+
+                    return new SolicitudEnProcesoResponse
+                    {
+                        Success = Convert.ToBoolean(reader["Success"]),
+                        Mensaje = Convert.ToString(reader["Mensaje"])
+                    };
+                }
+            }
+        }
+
+        public async Task<SolicitudEnProcesoResponse> ReasignarSolicitudAsync(
+            int idSolicitud,
+            string comentario,
+            string usuario,
+            string asignadoA,
+            CancellationToken cancellationToken = default(CancellationToken))
+        {
+            using (var connection = new SqlConnection(connectionString))
+            using (var command = new SqlCommand(
+                "pr_ciri_ReasignarSolicitud", connection))
+            {
+                command.CommandType = CommandType.StoredProcedure;
+                command.CommandTimeout = 30;
+                command.Parameters.Add(
+                    "@IdSolicitud", SqlDbType.Int).Value = idSolicitud;
+                command.Parameters.Add(new SqlParameter(
+                    "@Comentario", SqlDbType.NVarChar, -1)
+                {
+                    Value = comentario
+                });
+                command.Parameters.Add(
+                    "@Usuario", SqlDbType.VarChar, 100).Value = usuario;
+                command.Parameters.Add(
+                    "@AsignadoA", SqlDbType.VarChar, 100).Value = asignadoA;
+
+                await connection.OpenAsync(cancellationToken)
+                    .ConfigureAwait(false);
+
+                using (var reader = await command.ExecuteReaderAsync(
+                    cancellationToken).ConfigureAwait(false))
+                {
+                    if (!await reader.ReadAsync(cancellationToken)
+                        .ConfigureAwait(false))
+                    {
+                        throw new InvalidOperationException(
+                            "El procedimiento no devolvió una respuesta.");
+                    }
+
+                    return new SolicitudEnProcesoResponse
+                    {
+                        Success = Convert.ToBoolean(reader["Success"]),
+                        Mensaje = Convert.ToString(reader["Mensaje"])
+                    };
+                }
+            }
+        }
+
+        public async Task<SolicitudEnProcesoResponse> DerivarSolicitudAsync(
+            int idSolicitud,
+            string comentario,
+            string usuario,
+            string asignadoA,
+            CancellationToken cancellationToken = default(CancellationToken))
+        {
+            using (var connection = new SqlConnection(connectionString))
+            using (var command = new SqlCommand(
+                "pr_ciri_DerivarSolicitud", connection))
+            {
+                command.CommandType = CommandType.StoredProcedure;
+                command.CommandTimeout = 30;
+                command.Parameters.Add(
+                    "@IdSolicitud", SqlDbType.Int).Value = idSolicitud;
+                command.Parameters.Add(new SqlParameter(
+                    "@Comentario", SqlDbType.NVarChar, -1)
+                {
+                    Value = comentario
+                });
+                command.Parameters.Add(
+                    "@Usuario", SqlDbType.VarChar, 100).Value = usuario;
+                command.Parameters.Add(
+                    "@AsignadoA", SqlDbType.VarChar, 100).Value = asignadoA;
 
                 await connection.OpenAsync(cancellationToken)
                     .ConfigureAwait(false);

@@ -114,11 +114,6 @@
   <ItemGroup>
     <Folder Include="App_Data\" />
     <Folder Include="Models\" />
-    <Folder Include="Dtos\" />
-    <Folder Include="Entities\" />
-    <Folder Include="Interfaces\" />
-    <Folder Include="Repositories\" />
-    <Folder Include="Services\" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="App_Start\BundleConfig.cs" />
@@ -145,6 +140,8 @@
     <Compile Include="Controllers\CentrosCostoController.cs" />
     <Compile Include="Controllers\ComentariosSolicitudesController.cs" />
     <Compile Include="Controllers\DetalleSolicitudesController.cs" />
+    <Compile Include="Controllers\HistorialSolicitudesController.cs" />
+    <Compile Include="Controllers\CatSubOcuController.cs" />
     <Compile Include="Controllers\EstadosSolicitudController.cs" />
     <Compile Include="Controllers\OcurrenciasController.cs" />
     <Compile Include="Controllers\SolicitudesController.cs" />
@@ -171,6 +168,12 @@
     <Compile Include="Dtos\SolicitudPorCodigoResponse.cs" />
     <Compile Include="Dtos\SolicitudEnProcesoRequest.cs" />
     <Compile Include="Dtos\SolicitudEnProcesoResponse.cs" />
+    <Compile Include="Dtos\SolicitarInformacionRequest.cs" />
+    <Compile Include="Dtos\EnviarInformacionRequest.cs" />
+    <Compile Include="Dtos\AnularSolicitudRequest.cs" />
+    <Compile Include="Dtos\FinalizarSolicitudRequest.cs" />
+    <Compile Include="Dtos\ReasignarSolicitudRequest.cs" />
+    <Compile Include="Dtos\DerivarSolicitudRequest.cs" />
     <Compile Include="Dtos\RegistrarSolicitudRequest.cs" />
     <Compile Include="Dtos\RegistrarSolicitudResponse.cs" />
     <Compile Include="Dtos\SubcategoriaResponse.cs" />
@@ -184,6 +187,9 @@
     <Compile Include="Dtos\RolResponse.cs" />
     <Compile Include="Dtos\ComentarioSolicitudResponse.cs" />
     <Compile Include="Dtos\DetalleSolicitudResponse.cs" />
+    <Compile Include="Dtos\HistorialSolicitudResponse.cs" />
+    <Compile Include="Dtos\CatSubOcuResponse.cs" />
+    <Compile Include="Dtos\CrearCatSubOcuRequest.cs" />
     <Compile Include="Dtos\EstadoSolicitudResponse.cs" />
     <Compile Include="Entities\EntityBase.cs" />
     <Compile Include="Entities\Categoria.cs" />
@@ -191,6 +197,8 @@
     <Compile Include="Entities\ComentarioSolicitud.cs" />
     <Compile Include="Entities\DetalleSolicitud.cs" />
     <Compile Include="Entities\EstadoSolicitud.cs" />
+    <Compile Include="Entities\HistorialSolicitud.cs" />
+    <Compile Include="Entities\CatSubOcu.cs" />
     <Compile Include="Entities\Ocurrencia.cs" />
     <Compile Include="Entities\SolicitudFlag.cs" />
     <Compile Include="Entities\SolicitudComentarioDetalle.cs" />
@@ -209,6 +217,8 @@
     <Compile Include="Interfaces\IComentarioSolicitudRepository.cs" />
     <Compile Include="Interfaces\IDetalleSolicitudRepository.cs" />
     <Compile Include="Interfaces\IEstadoSolicitudRepository.cs" />
+    <Compile Include="Interfaces\IHistorialSolicitudRepository.cs" />
+    <Compile Include="Interfaces\ICatSubOcuRepository.cs" />
     <Compile Include="Interfaces\IOcurrenciaRepository.cs" />
     <Compile Include="Interfaces\ISolicitudRepository.cs" />
     <Compile Include="Interfaces\ISolicitudPorCodigoRepository.cs" />
@@ -225,6 +235,8 @@
     <Compile Include="Repositories\SqlComentarioSolicitudRepository.cs" />
     <Compile Include="Repositories\SqlDetalleSolicitudRepository.cs" />
     <Compile Include="Repositories\SqlEstadoSolicitudRepository.cs" />
+    <Compile Include="Repositories\SqlHistorialSolicitudRepository.cs" />
+    <Compile Include="Repositories\SqlCatSubOcuRepository.cs" />
     <Compile Include="Repositories\SqlOcurrenciaRepository.cs" />
     <Compile Include="Repositories\SqlSubcategoriaRepository.cs" />
     <Compile Include="Repositories\SqlTipoRegistroRepository.cs" />
@@ -237,6 +249,8 @@
     <Compile Include="Services\ComentarioSolicitudService.cs" />
     <Compile Include="Services\DetalleSolicitudService.cs" />
     <Compile Include="Services\EstadoSolicitudService.cs" />
+    <Compile Include="Services\HistorialSolicitudService.cs" />
+    <Compile Include="Services\CatSubOcuService.cs" />
     <Compile Include="Services\OcurrenciaService.cs" />
     <Compile Include="Services\SubcategoriaService.cs" />
     <Compile Include="Services\TipoRegistroService.cs" />
@@ -255,7 +269,9 @@
     <Content Include="Scripts\bootstrap.min.js" />
     <Content Include="Scripts\respond.js" />
     <Content Include="Scripts\respond.min.js" />
-    <Content Include="Web.config" />
+    <Content Include="Web.config">
+      <SubType>Designer</SubType>
+    </Content>
     <Content Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
     </Content>
@@ -290,6 +306,7 @@
     <Content Include="Areas\HelpPage\Views\Help\Api.cshtml" />
     <None Include="Project_Readme.html" />
     <None Include="ARCHITECTURE.md" />
+    <None Include="Properties\PublishProfiles\SA-CIRI.pubxml" />
     <None Include="Repositories\README.md" />
     <None Include="Services\README.md" />
   </ItemGroup>

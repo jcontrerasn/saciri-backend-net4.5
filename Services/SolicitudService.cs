@@ -47,6 +47,20 @@ namespace SACIRI_backend.Services
                     "El campo CreadoPor es obligatorio.", "CreadoPor");
             }
 
+            if (request.IdTipoRegistro <= 0)
+            {
+                throw new ArgumentException(
+                    "El identificador del tipo de registro debe ser mayor que cero.",
+                    "IdTipoRegistro");
+            }
+
+            if (request.IdCategoria <= 0)
+            {
+                throw new ArgumentException(
+                    "El identificador de la categoría debe ser mayor que cero.",
+                    "IdCategoria");
+            }
+
             if (string.IsNullOrWhiteSpace(request.CentroCosto))
             {
                 throw new ArgumentException(
@@ -219,6 +233,292 @@ namespace SACIRI_backend.Services
             return await repository.PasarAEnProcesoAsync(
                 request.CodigoSolicitud.Trim(),
                 request.Usuario.Trim(),
+                cancellationToken).ConfigureAwait(false);
+        }
+
+        public async Task<SolicitudEnProcesoResponse> SolicitarInformacionAsync(
+            SolicitarInformacionRequest request,
+            CancellationToken cancellationToken = default(CancellationToken))
+        {
+            if (request == null)
+            {
+                throw new ArgumentException(
+                    "El cuerpo de la solicitud es obligatorio.", "request");
+            }
+
+            if (request.IdSolicitud <= 0)
+            {
+                throw new ArgumentException(
+                    "El identificador de la solicitud debe ser mayor que cero.",
+                    "IdSolicitud");
+            }
+
+            if (string.IsNullOrWhiteSpace(request.Comentario))
+            {
+                throw new ArgumentException(
+                    "El comentario es obligatorio.", "Comentario");
+            }
+
+            if (string.IsNullOrWhiteSpace(request.Usuario))
+            {
+                throw new ArgumentException(
+                    "El usuario es obligatorio.", "Usuario");
+            }
+
+            if (request.Usuario.Trim().Length > 100)
+            {
+                throw new ArgumentException(
+                    "El usuario no puede superar los 100 caracteres.",
+                    "Usuario");
+            }
+
+            return await repository.SolicitarInformacionAsync(
+                request.IdSolicitud,
+                request.Comentario.Trim(),
+                request.Usuario.Trim(),
+                cancellationToken).ConfigureAwait(false);
+        }
+
+        public async Task<SolicitudEnProcesoResponse> EnviarInformacionAsync(
+            EnviarInformacionRequest request,
+            CancellationToken cancellationToken = default(CancellationToken))
+        {
+            if (request == null)
+            {
+                throw new ArgumentException(
+                    "El cuerpo de la solicitud es obligatorio.", "request");
+            }
+
+            if (request.IdSolicitud <= 0)
+            {
+                throw new ArgumentException(
+                    "El identificador de la solicitud debe ser mayor que cero.",
+                    "IdSolicitud");
+            }
+
+            if (string.IsNullOrWhiteSpace(request.Comentario))
+            {
+                throw new ArgumentException(
+                    "El comentario es obligatorio.", "Comentario");
+            }
+
+            if (string.IsNullOrWhiteSpace(request.Usuario))
+            {
+                throw new ArgumentException(
+                    "El usuario es obligatorio.", "Usuario");
+            }
+
+            if (request.Usuario.Trim().Length > 100)
+            {
+                throw new ArgumentException(
+                    "El usuario no puede superar los 100 caracteres.",
+                    "Usuario");
+            }
+
+            return await repository.EnviarInformacionAsync(
+                request.IdSolicitud,
+                request.Comentario.Trim(),
+                request.Usuario.Trim(),
+                cancellationToken).ConfigureAwait(false);
+        }
+
+        public async Task<SolicitudEnProcesoResponse> AnularSolicitudAsync(
+            AnularSolicitudRequest request,
+            CancellationToken cancellationToken = default(CancellationToken))
+        {
+            if (request == null)
+            {
+                throw new ArgumentException(
+                    "El cuerpo de la solicitud es obligatorio.", "request");
+            }
+
+            if (request.IdSolicitud <= 0)
+            {
+                throw new ArgumentException(
+                    "El identificador de la solicitud debe ser mayor que cero.",
+                    "IdSolicitud");
+            }
+
+            if (string.IsNullOrWhiteSpace(request.Comentario))
+            {
+                throw new ArgumentException(
+                    "El comentario es obligatorio.", "Comentario");
+            }
+
+            if (string.IsNullOrWhiteSpace(request.Usuario))
+            {
+                throw new ArgumentException(
+                    "El usuario es obligatorio.", "Usuario");
+            }
+
+            if (request.Usuario.Trim().Length > 100)
+            {
+                throw new ArgumentException(
+                    "El usuario no puede superar los 100 caracteres.",
+                    "Usuario");
+            }
+
+            return await repository.AnularSolicitudAsync(
+                request.IdSolicitud,
+                request.Comentario.Trim(),
+                request.Usuario.Trim(),
+                cancellationToken).ConfigureAwait(false);
+        }
+
+        public async Task<SolicitudEnProcesoResponse> FinalizarSolicitudAsync(
+            FinalizarSolicitudRequest request,
+            CancellationToken cancellationToken = default(CancellationToken))
+        {
+            if (request == null)
+            {
+                throw new ArgumentException(
+                    "El cuerpo de la solicitud es obligatorio.", "request");
+            }
+
+            if (request.IdSolicitud <= 0)
+            {
+                throw new ArgumentException(
+                    "El identificador de la solicitud debe ser mayor que cero.",
+                    "IdSolicitud");
+            }
+
+            if (string.IsNullOrWhiteSpace(request.Comentario))
+            {
+                throw new ArgumentException(
+                    "El comentario es obligatorio.", "Comentario");
+            }
+
+            if (string.IsNullOrWhiteSpace(request.Usuario))
+            {
+                throw new ArgumentException(
+                    "El usuario es obligatorio.", "Usuario");
+            }
+
+            if (request.Usuario.Trim().Length > 100)
+            {
+                throw new ArgumentException(
+                    "El usuario no puede superar los 100 caracteres.",
+                    "Usuario");
+            }
+
+            return await repository.FinalizarSolicitudAsync(
+                request.IdSolicitud,
+                request.Comentario.Trim(),
+                request.Usuario.Trim(),
+                cancellationToken).ConfigureAwait(false);
+        }
+
+        public async Task<SolicitudEnProcesoResponse> ReasignarSolicitudAsync(
+            ReasignarSolicitudRequest request,
+            CancellationToken cancellationToken = default(CancellationToken))
+        {
+            if (request == null)
+            {
+                throw new ArgumentException(
+                    "El cuerpo de la solicitud es obligatorio.", "request");
+            }
+
+            if (request.IdSolicitud <= 0)
+            {
+                throw new ArgumentException(
+                    "El identificador de la solicitud debe ser mayor que cero.",
+                    "IdSolicitud");
+            }
+
+            if (string.IsNullOrWhiteSpace(request.Comentario))
+            {
+                throw new ArgumentException(
+                    "El comentario es obligatorio.", "Comentario");
+            }
+
+            if (string.IsNullOrWhiteSpace(request.Usuario))
+            {
+                throw new ArgumentException(
+                    "El usuario es obligatorio.", "Usuario");
+            }
+
+            if (request.Usuario.Trim().Length > 100)
+            {
+                throw new ArgumentException(
+                    "El usuario no puede superar los 100 caracteres.",
+                    "Usuario");
+            }
+
+            if (string.IsNullOrWhiteSpace(request.AsignadoA))
+            {
+                throw new ArgumentException(
+                    "El usuario asignado es obligatorio.", "AsignadoA");
+            }
+
+            if (request.AsignadoA.Trim().Length > 100)
+            {
+                throw new ArgumentException(
+                    "El usuario asignado no puede superar los 100 caracteres.",
+                    "AsignadoA");
+            }
+
+            return await repository.ReasignarSolicitudAsync(
+                request.IdSolicitud,
+                request.Comentario.Trim(),
+                request.Usuario.Trim(),
+                request.AsignadoA.Trim(),
+                cancellationToken).ConfigureAwait(false);
+        }
+
+        public async Task<SolicitudEnProcesoResponse> DerivarSolicitudAsync(
+            DerivarSolicitudRequest request,
+            CancellationToken cancellationToken = default(CancellationToken))
+        {
+            if (request == null)
+            {
+                throw new ArgumentException(
+                    "El cuerpo de la solicitud es obligatorio.", "request");
+            }
+
+            if (request.IdSolicitud <= 0)
+            {
+                throw new ArgumentException(
+                    "El identificador de la solicitud debe ser mayor que cero.",
+                    "IdSolicitud");
+            }
+
+            if (string.IsNullOrWhiteSpace(request.Comentario))
+            {
+                throw new ArgumentException(
+                    "El comentario es obligatorio.", "Comentario");
+            }
+
+            if (string.IsNullOrWhiteSpace(request.Usuario))
+            {
+                throw new ArgumentException(
+                    "El usuario es obligatorio.", "Usuario");
+            }
+
+            if (request.Usuario.Trim().Length > 100)
+            {
+                throw new ArgumentException(
+                    "El usuario no puede superar los 100 caracteres.",
+                    "Usuario");
+            }
+
+            if (string.IsNullOrWhiteSpace(request.AsignadoA))
+            {
+                throw new ArgumentException(
+                    "El usuario asignado es obligatorio.", "AsignadoA");
+            }
+
+            if (request.AsignadoA.Trim().Length > 100)
+            {
+                throw new ArgumentException(
+                    "El usuario asignado no puede superar los 100 caracteres.",
+                    "AsignadoA");
+            }
+
+            return await repository.DerivarSolicitudAsync(
+                request.IdSolicitud,
+                request.Comentario.Trim(),
+                request.Usuario.Trim(),
+                request.AsignadoA.Trim(),
                 cancellationToken).ConfigureAwait(false);
         }
     }

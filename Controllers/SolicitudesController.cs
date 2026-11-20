@@ -181,5 +181,203 @@ namespace SACIRI_backend.Controllers
                     });
             }
         }
+
+        // POST /api/solicitudes/solicitar-informacion
+        [HttpPost]
+        [Route("solicitar-informacion")]
+        public async Task<IHttpActionResult> SolicitarInformacion(
+            [FromBody] SolicitarInformacionRequest request,
+            CancellationToken cancellationToken)
+        {
+            try
+            {
+                var response = await solicitudService.SolicitarInformacionAsync(
+                    request,
+                    cancellationToken);
+
+                return Ok(new ApiResponse<SolicitudEnProcesoResponse>
+                {
+                    Status = (int)HttpStatusCode.OK,
+                    Message = "Información solicitada correctamente.",
+                    Data = response
+                });
+            }
+            catch (ArgumentException exception)
+            {
+                return Content(
+                    HttpStatusCode.BadRequest,
+                    new ApiResponse<object>
+                    {
+                        Status = (int)HttpStatusCode.BadRequest,
+                        Message = exception.Message,
+                        Data = null
+                    });
+            }
+        }
+
+        // POST /api/solicitudes/enviar-informacion
+        [HttpPost]
+        [Route("enviar-informacion")]
+        public async Task<IHttpActionResult> EnviarInformacion(
+            [FromBody] EnviarInformacionRequest request,
+            CancellationToken cancellationToken)
+        {
+            try
+            {
+                var response = await solicitudService.EnviarInformacionAsync(
+                    request,
+                    cancellationToken);
+
+                return Ok(new ApiResponse<SolicitudEnProcesoResponse>
+                {
+                    Status = (int)HttpStatusCode.OK,
+                    Message = "Información enviada correctamente.",
+                    Data = response
+                });
+            }
+            catch (ArgumentException exception)
+            {
+                return Content(
+                    HttpStatusCode.BadRequest,
+                    new ApiResponse<object>
+                    {
+                        Status = (int)HttpStatusCode.BadRequest,
+                        Message = exception.Message,
+                        Data = null
+                    });
+            }
+        }
+
+        // POST /api/solicitudes/anular
+        [HttpPost]
+        [Route("anular")]
+        public async Task<IHttpActionResult> AnularSolicitud(
+            [FromBody] AnularSolicitudRequest request,
+            CancellationToken cancellationToken)
+        {
+            try
+            {
+                var response = await solicitudService.AnularSolicitudAsync(
+                    request,
+                    cancellationToken);
+
+                return Ok(new ApiResponse<SolicitudEnProcesoResponse>
+                {
+                    Status = (int)HttpStatusCode.OK,
+                    Message = "Solicitud anulada correctamente.",
+                    Data = response
+                });
+            }
+            catch (ArgumentException exception)
+            {
+                return Content(
+                    HttpStatusCode.BadRequest,
+                    new ApiResponse<object>
+                    {
+                        Status = (int)HttpStatusCode.BadRequest,
+                        Message = exception.Message,
+                        Data = null
+                    });
+            }
+        }
+
+        // POST /api/solicitudes/finalizar
+        [HttpPost]
+        [Route("finalizar")]
+        public async Task<IHttpActionResult> FinalizarSolicitud(
+            [FromBody] FinalizarSolicitudRequest request,
+            CancellationToken cancellationToken)
+        {
+            try
+            {
+                var response = await solicitudService.FinalizarSolicitudAsync(
+                    request,
+                    cancellationToken);
+
+                return Ok(new ApiResponse<SolicitudEnProcesoResponse>
+                {
+                    Status = (int)HttpStatusCode.OK,
+                    Message = "Solicitud finalizada correctamente.",
+                    Data = response
+                });
+            }
+            catch (ArgumentException exception)
+            {
+                return Content(
+                    HttpStatusCode.BadRequest,
+                    new ApiResponse<object>
+                    {
+                        Status = (int)HttpStatusCode.BadRequest,
+                        Message = exception.Message,
+                        Data = null
+                    });
+            }
+        }
+
+        // POST /api/solicitudes/reasignar
+        [HttpPost]
+        [Route("reasignar")]
+        public async Task<IHttpActionResult> ReasignarSolicitud(
+            [FromBody] ReasignarSolicitudRequest request,
+            CancellationToken cancellationToken)
+        {
+            try
+            {
+                var response = await solicitudService.ReasignarSolicitudAsync(
+                    request,
+                    cancellationToken);
+
+                return Ok(new ApiResponse<SolicitudEnProcesoResponse>
+                {
+                    Status = (int)HttpStatusCode.OK,
+                    Message = "Solicitud reasignada correctamente.",
+                    Data = response
+                });
+            }
+            catch (ArgumentException exception)
+            {
+                return Content(
+                    HttpStatusCode.BadRequest,
+                    new ApiResponse<object>
+                    {
+                        Status = (int)HttpStatusCode.BadRequest,
+                        Message = exception.Message,
+                        Data = null
+                    });
+            }
+        }
+
+        // POST /api/solicitudes/derivar
+        [HttpPost]
+        [Route("derivar")]
+        public async Task<IHttpActionResult> DerivarSolicitud(
+            [FromBody] DerivarSolicitudRequest request,
+            CancellationToken cancellationToken)
+        {
+            try
+            {
+                var response = await solicitudService.DerivarSolicitudAsync(
+                    request,
+                    cancellationToken);
+
+                return Ok(new ApiResponse<SolicitudEnProcesoResponse>
+                {
+                    Status = (int)HttpStatusCode.OK,
+                    Message = "Solicitud derivada correctamente.",
+                    Data = response
+                });
+            }
+            catch (ArgumentException exception)
+            {
+                return Content(
+                    HttpStatusCode.BadRequest,
+                    new ApiResponse<object>
+                    {
+                        Status = (int)HttpStatusCode.BadRequest,
+                        Message = exception.Message,
+                        Data = null
+                    });
+            }
+        }
     }
 }

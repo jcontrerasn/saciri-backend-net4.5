@@ -21,5 +21,43 @@ namespace SACIRI_backend.Interfaces
             string codigoSolicitud,
             string usuario,
             CancellationToken cancellationToken = default(CancellationToken));
+
+        Task<SolicitudEnProcesoResponse> SolicitarInformacionAsync(
+            int idSolicitud,
+            string comentario,
+            string usuario,
+            CancellationToken cancellationToken = default(CancellationToken));
+
+        Task<SolicitudEnProcesoResponse> EnviarInformacionAsync(
+            int idSolicitud,
+            string comentario,
+            string usuario,
+            CancellationToken cancellationToken = default(CancellationToken));
+
+        Task<SolicitudEnProcesoResponse> AnularSolicitudAsync(
+            int idSolicitud,
+            string comentario,
+            string usuario,
+            CancellationToken cancellationToken = default(CancellationToken));
+
+        Task<SolicitudEnProcesoResponse> FinalizarSolicitudAsync(
+            int idSolicitud,
+            string comentario,
+            string usuario,
+            CancellationToken cancellationToken = default(CancellationToken));
+
+        Task<SolicitudEnProcesoResponse> ReasignarSolicitudAsync(
+            int idSolicitud,
+            string comentario,
+            string usuario,
+            string asignadoA,
+            CancellationToken cancellationToken = default(CancellationToken));
+
+        Task<SolicitudEnProcesoResponse> DerivarSolicitudAsync(
+            int idSolicitud,
+            string comentario,
+            string usuario,
+            string asignadoA,
+            CancellationToken cancellationToken = default(CancellationToken));
     }
 }
