@@ -79,14 +79,11 @@ namespace SACIRI_backend.Services
                     "El campo Descripcion es obligatorio.", "Descripcion");
             }
 
-            var codigoSolicitud = await repository.RegistrarAsync(
+            var registro = await repository.RegistrarAsync(
                 request,
                 cancellationToken).ConfigureAwait(false);
 
-            return new RegistrarSolicitudResponse
-            {
-                CodigoSolicitud = codigoSolicitud
-            };
+            return registro;
         }
 
         public async Task<IList<SolicitudFlagResponse>> ObtenerFlagAsync(

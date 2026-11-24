@@ -28,7 +28,8 @@ namespace SACIRI_backend.Services
             long tamanoAdjunto,
             string ruta,
             string adjuntadoPor,
-            CancellationToken cancellationToken = default(CancellationToken))
+            CancellationToken cancellationToken = default(CancellationToken),
+            bool primerHistorial = false)
         {
             if (idSolicitud <= 0)
             {
@@ -83,7 +84,8 @@ namespace SACIRI_backend.Services
                 tamanoAdjunto,
                 ruta.Trim(),
                 adjuntadoPor.Trim(),
-                cancellationToken).ConfigureAwait(false);
+                cancellationToken,
+                primerHistorial).ConfigureAwait(false);
 
             return registro == null ? null : MapearRespuesta(registro);
         }

@@ -1,8 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Net.Http.Formatting;
 using System.Web.Http;
 using SACIRI_backend.Dtos;
 using SACIRI_backend.Services;
@@ -13,13 +17,18 @@ namespace SACIRI_backend.Controllers
     public class SolicitudesController : ApiController
     {
         private readonly SolicitudService solicitudService;
+        private readonly AdjuntoSolicitudService adjuntoSolicitudService;
 
         public SolicitudesController()
-            : this(DependencyConfig.CreateSolicitudService())
+            : this(
+                DependencyConfig.CreateSolicitudService(),
+                DependencyConfig.CreateAdjuntoSolicitudService())
         {
         }
 
-        public SolicitudesController(SolicitudService solicitudService)
+        public SolicitudesController(
+            SolicitudService solicitudService,
+            AdjuntoSolicitudService adjuntoSolicitudService)
         {
             if (solicitudService == null)
             {
@@ -27,20 +36,136 @@ namespace SACIRI_backend.Controllers
             }
 
             this.solicitudService = solicitudService;
+            if (adjuntoSolicitudService == null)
+            {
+                throw new ArgumentNullException(
+                    "adjuntoSolicitudService");
+            }
+
+            this.adjuntoSolicitudService = adjuntoSolicitudService;
         }
 
         // POST /api/solicitudes
         [HttpPost]
         [Route("")]
         public async Task<IHttpActionResult> Registrar(
-            [FromBody] RegistrarSolicitudRequest request,
             CancellationToken cancellationToken)
         {
+            if (Request.Content == null
+                || !Request.Content.IsMimeMultipartContent())
+            {
+                return Content(
+                    HttpStatusCode.UnsupportedMediaType,
+                    new ApiResponse<object>
+                    {
+                        Status = (int)HttpStatusCode.UnsupportedMediaType,
+                        Message = "La solicitud debe ser multipart/form-data.",
+                        Data = null
+                    });
+            }
+
+            var rootDirectory = AppDomain.CurrentDomain.BaseDirectory;
+            var tempDirectory = Path.Combine(
+                rootDirectory,
+                "App_Data",
+                "uploads-temp");
+            Directory.CreateDirectory(tempDirectory);
+
+            var provider = new MultipartFormDataStreamProvider(tempDirectory);
+            string archivoTemporal = null;
+            string rutaFisica = null;
+
             try
             {
+                await Request.Content.ReadAsMultipartAsync(
+                    provider,
+                    cancellationToken).ConfigureAwait(false);
+
+                var archivo = provider.FileData.FirstOrDefault();
+                if (archivo == null)
+                {
+                    throw new ArgumentException(
+                        "Debe enviar un archivo en el campo 'archivo'.");
+                }
+
+                archivoTemporal = archivo.LocalFileName;
+                var contentDisposition = archivo.Headers.ContentDisposition;
+                var nombreOriginal = contentDisposition == null
+                    ? null
+                    : contentDisposition.FileName;
+                var nombreAdjunto = string.IsNullOrWhiteSpace(nombreOriginal)
+                    ? null
+                    : Path.GetFileName(nombreOriginal.Trim('"'));
+
+                if (string.IsNullOrWhiteSpace(nombreAdjunto))
+                {
+                    throw new ArgumentException(
+                        "El archivo debe tener un nombre válido.");
+                }
+
+                var extension = Path.GetExtension(nombreAdjunto);
+                var formato = string.IsNullOrWhiteSpace(extension)
+                    ? archivo.Headers.ContentType == null
+                        ? null
+                        : archivo.Headers.ContentType.MediaType
+                    : extension.TrimStart('.');
+
+                var request = CrearSolicitudRequest(provider);
+                var adjuntadoPor = ObtenerCampo(provider, "adjuntadoPor")
+                    ?? request.CreadoPor;
+                var tamanoAdjunto = new FileInfo(archivoTemporal).Length;
+
+                ValidarDatosAdjunto(
+                    nombreAdjunto,
+                    formato,
+                    tamanoAdjunto,
+                    adjuntadoPor);
+
                 var response = await solicitudService.RegistrarAsync(
                     request,
-                    cancellationToken);
+                    cancellationToken).ConfigureAwait(false);
+
+                if (response == null || response.IdSolicitud <= 0)
+                {
+                    throw new InvalidOperationException(
+                        "No se pudo obtener el IdSolicitud registrado.");
+                }
+
+                var nombreSeguro = SanitizarNombre(nombreAdjunto);
+                var nombreGuardado = Guid.NewGuid().ToString("N")
+                    + "_" + nombreSeguro;
+                var directorioSolicitud = Path.Combine(
+                    rootDirectory,
+                    "uploads",
+                    "solicitudes",
+                    response.IdSolicitud.ToString());
+                Directory.CreateDirectory(directorioSolicitud);
+
+                rutaFisica = Path.Combine(
+                    directorioSolicitud,
+                    nombreGuardado);
+                File.Move(archivoTemporal, rutaFisica);
+                archivoTemporal = null;
+
+                var ruta = "uploads/solicitudes/"
+                    + response.IdSolicitud + "/" + nombreGuardado;
+                var adjunto = await adjuntoSolicitudService.CrearAsync(
+                    response.IdSolicitud,
+                    nombreAdjunto,
+                    formato,
+                    tamanoAdjunto,
+                    ruta,
+                    adjuntadoPor,
+                    cancellationToken,
+                    true).ConfigureAwait(false);
+
+                if (adjunto == null)
+                {
+                    EliminarArchivo(rutaFisica);
+                    rutaFisica = null;
+                    throw new InvalidOperationException(
+                        "No se encontró el primer historial de la solicitud.");
+                }
 
                 return Content(
                     HttpStatusCode.Created,
@@ -53,6 +178,8 @@ namespace SACIRI_backend.Controllers
             }
             catch (ArgumentException exception)
             {
+                EliminarArchivo(archivoTemporal);
+                EliminarArchivo(rutaFisica);
                 return Content(
                     HttpStatusCode.BadRequest,
                     new ApiResponse<object>
@@ -61,6 +188,128 @@ namespace SACIRI_backend.Controllers
                         Message = exception.Message,
                         Data = null
                     });
+            }
+            catch (InvalidOperationException exception)
+            {
+                EliminarArchivo(archivoTemporal);
+                EliminarArchivo(rutaFisica);
+                return Content(
+                    HttpStatusCode.InternalServerError,
+                    new ApiResponse<object>
+                    {
+                        Status = (int)HttpStatusCode.InternalServerError,
+                        Message = exception.Message,
+                        Data = null
+                    });
+            }
+            catch
+            {
+                EliminarArchivo(archivoTemporal);
+                EliminarArchivo(rutaFisica);
+                throw;
+            }
+        }
+
+        private static RegistrarSolicitudRequest CrearSolicitudRequest(
+            MultipartFormDataStreamProvider provider)
+        {
+            return new RegistrarSolicitudRequest
+            {
+                SolicitadoPara = ObtenerCampo(provider, "solicitadoPara"),
+                CreadoPor = ObtenerCampo(provider, "creadoPor"),
+                IdTipoRegistro = ObtenerEntero(provider, "idTipoRegistro"),
+                IdCategoria = ObtenerEntero(provider, "idCategoria"),
+                IdSubcategoria = ObtenerEnteroNullable(
+                    provider, "idSubcategoria"),
+                IdOcurrencia = ObtenerEnteroNullable(
+                    provider, "idOcurrencia"),
+                CentroCosto = ObtenerCampo(provider, "centroCosto"),
+                Lugar = ObtenerCampo(provider, "lugar"),
+                Descripcion = ObtenerCampo(provider, "descripcion"),
+                Recomendacion = ObtenerCampo(provider, "recomendacion")
+            };
+        }
+
+        private static string ObtenerCampo(
+            MultipartFormDataStreamProvider provider,
+            string nombre)
+        {
+            var clave = provider.FormData.AllKeys.FirstOrDefault(
+                key => string.Equals(
+                    key,
+                    nombre,
+                    StringComparison.OrdinalIgnoreCase));
+
+            return clave == null ? null : provider.FormData[clave];
+        }
+
+        private static int ObtenerEntero(
+            MultipartFormDataStreamProvider provider,
+            string nombre)
+        {
+            int valor;
+            return int.TryParse(ObtenerCampo(provider, nombre), out valor)
+                ? valor
+                : 0;
+        }
+
+        private static int? ObtenerEnteroNullable(
+            MultipartFormDataStreamProvider provider,
+            string nombre)
+        {
+            int valor;
+            return int.TryParse(ObtenerCampo(provider, nombre), out valor)
+                ? (int?)valor
+                : null;
+        }
+
+        private static string SanitizarNombre(string nombre)
+        {
+            var caracteresInvalidos = Path.GetInvalidFileNameChars();
+            return new string(nombre.Select(caracter =>
+                caracteresInvalidos.Contains(caracter)
+                    ? '_'
+                    : caracter).ToArray());
+        }
+
+        private static void EliminarArchivo(string ruta)
+        {
+            if (!string.IsNullOrWhiteSpace(ruta) && File.Exists(ruta))
+            {
+                File.Delete(ruta);
+            }
+        }
+
+        private static void ValidarDatosAdjunto(
+            string nombreAdjunto,
+            string formato,
+            long tamanoAdjunto,
+            string adjuntadoPor)
+        {
+            if (nombreAdjunto.Length > 255)
+            {
+                throw new ArgumentException(
+                    "El nombre del archivo no puede superar los 255 caracteres.");
+            }
+
+            if (string.IsNullOrWhiteSpace(formato)
+                || formato.Length > 100)
+            {
+                throw new ArgumentException(
+                    "El formato del archivo es obligatorio y no puede superar los 100 caracteres.");
+            }
+
+            if (tamanoAdjunto <= 0)
+            {
+                throw new ArgumentException(
+                    "El archivo debe tener un tamaño mayor que cero.");
+            }
+
+            if (string.IsNullOrWhiteSpace(adjuntadoPor)
+                || adjuntadoPor.Trim().Length > 100)
+            {
+                throw new ArgumentException(
+                    "AdjuntadoPor es obligatorio y no puede superar los 100 caracteres.");
             }
         }
 

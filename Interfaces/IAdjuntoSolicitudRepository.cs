@@ -13,6 +13,7 @@ namespace SACIRI_backend.Interfaces
             long tamanoAdjunto,
             string ruta,
             string adjuntadoPor,
-            CancellationToken cancellationToken = default(CancellationToken));
+            CancellationToken cancellationToken = default(CancellationToken),
+            bool primerHistorial = false);
     }
 }

@@ -102,7 +102,10 @@ BEGIN
             @IdSubcategoria,
             @IdOcurrencia,
             NULL, -- Todavía sin asignar
-			(select Copia from CIRI_CatSubOcu)
+			(
+				SELECT c.Copia FROM dbo.CIRI_CatSubOcu AS c
+				WHERE c.IdOcurrencia = @IdOcurrencia AND c.Estado = 1
+			)
         );
 
         SET @IdSolicitud = CONVERT(INT, SCOPE_IDENTITY());

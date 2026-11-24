@@ -29,7 +29,7 @@ namespace SACIRI_backend.Repositories
             connectionString = setting.ConnectionString;
         }
 
-        public async Task<string> RegistrarAsync(
+        public async Task<RegistrarSolicitudResponse> RegistrarAsync(
             RegistrarSolicitudRequest request,
             CancellationToken cancellationToken = default(CancellationToken))
         {
@@ -57,9 +57,42 @@ namespace SACIRI_backend.Repositories
                 var result = await command.ExecuteScalarAsync(
                     cancellationToken).ConfigureAwait(false);
 
-                return result == null || result == DBNull.Value
+                var codigoSolicitud = result == null || result == DBNull.Value
                     ? null
                     : Convert.ToString(result);
+
+                if (string.IsNullOrWhiteSpace(codigoSolicitud))
+                {
+                    return null;
+                }
+
+                using (var idCommand = new SqlCommand(
+                    "SELECT TOP (1) IdSolicitud "
+                    + "FROM dbo.CIRI_Solicitudes "
+                    + "WHERE CodigoSolicitud = @CodigoSolicitud",
+                    connection))
+                {
+                    idCommand.CommandType = CommandType.Text;
+                    idCommand.CommandTimeout = 30;
+                    idCommand.Parameters.Add(
+                        "@CodigoSolicitud", SqlDbType.VarChar, 100).Value =
+                        codigoSolicitud;
+
+                    var idResult = await idCommand.ExecuteScalarAsync(
+                        cancellationToken).ConfigureAwait(false);
+
+                    if (idResult == null || idResult == DBNull.Value)
+                    {
+                        throw new InvalidOperationException(
+                            "No se encontrÃ³ el IdSolicitud registrado.");
+                    }
+
+                    return new RegistrarSolicitudResponse
+                    {
+                        IdSolicitud = Convert.ToInt32(idResult),
+                        CodigoSolicitud = codigoSolicitud
+                    };
+                }
             }
         }
 

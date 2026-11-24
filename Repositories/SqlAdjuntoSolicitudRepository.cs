@@ -34,12 +34,18 @@ namespace SACIRI_backend.Repositories
             long tamanoAdjunto,
             string ruta,
             string adjuntadoPor,
-            CancellationToken cancellationToken = default(CancellationToken))
+            CancellationToken cancellationToken = default(CancellationToken),
+            bool primerHistorial = false)
         {
             using (var connection = new SqlConnection(connectionString))
             {
                 await connection.OpenAsync(cancellationToken)
                     .ConfigureAwait(false);
+
+                var ordenHistorial = primerHistorial
+                    ? "ORDER BY IdHistorialSolicitud ASC; "
+                    : "ORDER BY FechaRegistro DESC, "
+                        + "IdHistorialSolicitud DESC; ";
 
                 using (var command = new SqlCommand(
                     "DECLARE @IdHistorialSolicitud INT; "
@@ -47,7 +53,7 @@ namespace SACIRI_backend.Repositories
                     + "IdHistorialSolicitud "
                     + "FROM dbo.CIRI_HistorialSolicitudes "
                     + "WHERE IdSolicitud = @IdSolicitud "
-                    + "ORDER BY FechaRegistro DESC, IdHistorialSolicitud DESC; "
+                    + ordenHistorial
                     + "IF @IdHistorialSolicitud IS NULL "
                     + "BEGIN "
                     + "SELECT CAST(NULL AS INT); "

@@ -8,7 +8,7 @@ namespace SACIRI_backend.Interfaces
 {
     public interface ISolicitudRepository
     {
-        Task<string> RegistrarAsync(
+        Task<RegistrarSolicitudResponse> RegistrarAsync(
             RegistrarSolicitudRequest request,
             CancellationToken cancellationToken = default(CancellationToken));
 
