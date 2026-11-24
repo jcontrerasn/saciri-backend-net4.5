@@ -44,6 +44,7 @@ namespace SACIRI_backend.Services
             {
                 Usuario = usuario.Cuenta,
                 NombreCompleto = usuario.NombreCompleto,
+                Rol = usuario.Rol,
                 Area = usuario.Area
             };
         }

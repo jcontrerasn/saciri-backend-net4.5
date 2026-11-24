@@ -12,15 +12,24 @@ namespace SACIRI_backend.Services
     public class UsuarioRolService
     {
         private readonly IUsuarioRolRepository repository;
+        private readonly IPuestoRepository puestoRepository;
 
-        public UsuarioRolService(IUsuarioRolRepository repository)
+        public UsuarioRolService(
+            IUsuarioRolRepository repository,
+            IPuestoRepository puestoRepository)
         {
             if (repository == null)
             {
                 throw new ArgumentNullException("repository");
             }
 
+            if (puestoRepository == null)
+            {
+                throw new ArgumentNullException("puestoRepository");
+            }
+
             this.repository = repository;
+            this.puestoRepository = puestoRepository;
         }
 
         public async Task<UsuarioRolResponse> CrearAsync(
@@ -74,9 +83,12 @@ namespace SACIRI_backend.Services
                 usuario,
                 request.IdRol,
                 NormalizarTexto(request.Jefe),
+                NormalizarTexto(request.Puestos),
                 cancellationToken).ConfigureAwait(false);
 
-            return MapearRespuesta(usuarioRol);
+            return await MapearRespuestaAsync(
+                usuarioRol,
+                cancellationToken).ConfigureAwait(false);
         }
 
         public async Task<UsuarioRolResponse> ActualizarAsync(
@@ -116,9 +128,14 @@ namespace SACIRI_backend.Services
                 idUsuarioRol,
                 request.IdRol,
                 NormalizarTexto(request.Jefe),
+                NormalizarTexto(request.Puestos),
                 cancellationToken).ConfigureAwait(false);
 
-            return usuarioRol == null ? null : MapearRespuesta(usuarioRol);
+            return usuarioRol == null
+                ? null
+                : await MapearRespuestaAsync(
+                    usuarioRol,
+                    cancellationToken).ConfigureAwait(false);
         }
 
         public async Task<UsuarioRolResponse> CambiarEstadoAsync(
@@ -136,7 +153,11 @@ namespace SACIRI_backend.Services
                 idUsuarioRol,
                 cancellationToken).ConfigureAwait(false);
 
-            return usuarioRol == null ? null : MapearRespuesta(usuarioRol);
+            return usuarioRol == null
+                ? null
+                : await MapearRespuestaAsync(
+                    usuarioRol,
+                    cancellationToken).ConfigureAwait(false);
         }
 
         public async Task<IList<UsuarioRolResponse>> ObtenerTodosAsync(
@@ -145,7 +166,40 @@ namespace SACIRI_backend.Services
             var usuariosRoles = await repository.ObtenerTodosAsync(
                 cancellationToken).ConfigureAwait(false);
 
-            return usuariosRoles.Select(MapearRespuesta).ToList();
+            var puestosPorId = await ObtenerPuestosPorIdAsync(
+                cancellationToken).ConfigureAwait(false);
+
+            return usuariosRoles.Select(usuarioRol =>
+                MapearRespuesta(usuarioRol, puestosPorId)).ToList();
+        }
+
+        public async Task<IList<UsuarioRolResponse>> BuscarPorUsuarioAsync(
+            string filtro,
+            CancellationToken cancellationToken = default(CancellationToken))
+        {
+            if (string.IsNullOrWhiteSpace(filtro))
+            {
+                throw new ArgumentException(
+                    "El filtro de usuario es obligatorio.", "filtro");
+            }
+
+            filtro = filtro.Trim();
+            if (filtro.Length > 100)
+            {
+                throw new ArgumentException(
+                    "El filtro no puede superar los 100 caracteres.",
+                    "filtro");
+            }
+
+            var usuariosRoles = await repository.BuscarPorUsuarioAsync(
+                filtro,
+                cancellationToken).ConfigureAwait(false);
+
+            var puestosPorId = await ObtenerPuestosPorIdAsync(
+                cancellationToken).ConfigureAwait(false);
+
+            return usuariosRoles.Select(usuarioRol =>
+                MapearRespuesta(usuarioRol, puestosPorId)).ToList();
         }
 
         private static string NormalizarTexto(string valor)
@@ -154,7 +208,8 @@ namespace SACIRI_backend.Services
         }
 
         private static UsuarioRolResponse MapearRespuesta(
-            UsuarioRol usuarioRol)
+            UsuarioRol usuarioRol,
+            IDictionary<int, string> puestosPorId = null)
         {
             return new UsuarioRolResponse
             {
@@ -163,9 +218,66 @@ namespace SACIRI_backend.Services
                 IdRol = usuarioRol.IdRol,
                 Rol = usuarioRol.Rol == null ? null : usuarioRol.Rol.Nombre,
                 Jefe = usuarioRol.Jefe,
+                Puestos = puestosPorId == null
+                    ? new List<PuestoUsuarioRolResponse>()
+                    : MapearPuestos(usuarioRol.Puestos, puestosPorId),
+                EstadoConexion = usuarioRol.EstadoConexion,
                 Activo = usuarioRol.Activo,
                 FechaRegistro = usuarioRol.FechaRegistro
             };
+        }
+
+        private async Task<UsuarioRolResponse> MapearRespuestaAsync(
+            UsuarioRol usuarioRol,
+            CancellationToken cancellationToken)
+        {
+            var puestosPorId = await ObtenerPuestosPorIdAsync(
+                cancellationToken).ConfigureAwait(false);
+
+            return MapearRespuesta(usuarioRol, puestosPorId);
+        }
+
+        private async Task<IDictionary<int, string>> ObtenerPuestosPorIdAsync(
+            CancellationToken cancellationToken)
+        {
+            var puestos = await puestoRepository.ObtenerTodosAsync(
+                cancellationToken).ConfigureAwait(false);
+
+            return puestos.ToDictionary(
+                puesto => puesto.IdPuesto,
+                puesto => puesto.Nombre);
+        }
+
+        private static IList<PuestoUsuarioRolResponse> MapearPuestos(
+            string puestos,
+            IDictionary<int, string> puestosPorId)
+        {
+            var respuesta = new List<PuestoUsuarioRolResponse>();
+
+            if (string.IsNullOrWhiteSpace(puestos))
+            {
+                return respuesta;
+            }
+
+            foreach (var valor in puestos.Split(
+                new[] { ';' }, StringSplitOptions.RemoveEmptyEntries))
+            {
+                int idPuesto;
+                if (!int.TryParse(valor.Trim(), out idPuesto))
+                {
+                    continue;
+                }
+
+                string nombre;
+                puestosPorId.TryGetValue(idPuesto, out nombre);
+                respuesta.Add(new PuestoUsuarioRolResponse
+                {
+                    IdPuesto = idPuesto,
+                    Nombre = nombre
+                });
+            }
+
+            return respuesta;
         }
     }
 }

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace SACIRI_backend.Dtos
 {
@@ -9,6 +10,8 @@ namespace SACIRI_backend.Dtos
         public int IdRol { get; set; }
         public string Rol { get; set; }
         public string Jefe { get; set; }
+        public IList<PuestoUsuarioRolResponse> Puestos { get; set; }
+        public bool EstadoConexion { get; set; }
         public bool Activo { get; set; }
         public DateTime FechaRegistro { get; set; }
     }

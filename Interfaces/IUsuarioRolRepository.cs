@@ -15,15 +15,21 @@ namespace SACIRI_backend.Interfaces
             string usuario,
             int idRol,
             string jefe,
+            string puestos,
             CancellationToken cancellationToken = default(CancellationToken));
 
         Task<IList<UsuarioRol>> ObtenerTodosAsync(
+            CancellationToken cancellationToken = default(CancellationToken));
+
+        Task<IList<UsuarioRol>> BuscarPorUsuarioAsync(
+            string filtro,
             CancellationToken cancellationToken = default(CancellationToken));
 
         Task<UsuarioRol> ActualizarAsync(
             int idUsuarioRol,
             int idRol,
             string jefe,
+            string puestos,
             CancellationToken cancellationToken = default(CancellationToken));
 
         Task<UsuarioRol> CambiarEstadoAsync(

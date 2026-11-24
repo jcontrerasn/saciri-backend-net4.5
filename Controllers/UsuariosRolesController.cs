@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
@@ -50,6 +51,52 @@ namespace SACIRI_backend.Controllers
                         Message = "Usuario asignado al rol correctamente.",
                         Data = usuarioRol
                     });
+            }
+            catch (ArgumentException exception)
+            {
+                return Content(
+                    HttpStatusCode.BadRequest,
+                    new ApiResponse<object>
+                    {
+                        Status = (int)HttpStatusCode.BadRequest,
+                        Message = exception.Message,
+                        Data = null
+                    });
+            }
+        }
+
+        // POST /api/usuarios-roles/filtro
+        [HttpPost]
+        [Route("filtro")]
+        public async Task<IHttpActionResult> BuscarPorFiltro(
+            [FromBody] UsuarioRolFiltroRequest request,
+            CancellationToken cancellationToken)
+        {
+            try
+            {
+                if (request == null)
+                {
+                    throw new ArgumentException(
+                        "El cuerpo de la solicitud es obligatorio.",
+                        "request");
+                }
+
+                var usuariosRoles = await usuarioRolService
+                    .BuscarPorUsuarioAsync(
+                        request.Usuario,
+                        cancellationToken);
+
+                return Ok(new ApiResponse<List<UsuarioRolFiltroResponse>>
+                {
+                    Status = (int)HttpStatusCode.OK,
+                    Message = "Usuarios con roles obtenidos correctamente por filtro.",
+                    Data = usuariosRoles
+                        .Select(usuarioRol => new UsuarioRolFiltroResponse
+                        {
+                            Usuario = usuarioRol.Usuario
+                        })
+                        .ToList()
+                });
             }
             catch (ArgumentException exception)
             {

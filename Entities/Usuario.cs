@@ -6,6 +6,8 @@ namespace SACIRI_backend.Entities
 
         public string NombreCompleto { get; set; }
 
+        public string Rol { get; set; }
+
         public string Area { get; set; }
 
         public string Ubicacion { get; set; }

@@ -64,6 +64,53 @@ namespace SACIRI_backend.Controllers
             }
         }
 
+        // PUT /api/catsubocu/{id}
+        [HttpPut]
+        [Route("{id:int}")]
+        public async Task<IHttpActionResult> Actualizar(
+            int id,
+            [FromBody] ActualizarCatSubOcuRequest request,
+            CancellationToken cancellationToken)
+        {
+            try
+            {
+                var registro = await catSubOcuService.ActualizarAsync(
+                    id,
+                    request,
+                    cancellationToken);
+
+                if (registro == null)
+                {
+                    return Content(
+                        HttpStatusCode.NotFound,
+                        new ApiResponse<CatSubOcuResponse>
+                        {
+                            Status = (int)HttpStatusCode.NotFound,
+                            Message = "No se encontrÃ³ la configuraciÃ³n CatSubOcu indicada.",
+                            Data = null
+                        });
+                }
+
+                return Ok(new ApiResponse<CatSubOcuResponse>
+                {
+                    Status = (int)HttpStatusCode.OK,
+                    Message = "ConfiguraciÃ³n CatSubOcu actualizada correctamente.",
+                    Data = registro
+                });
+            }
+            catch (ArgumentException exception)
+            {
+                return Content(
+                    HttpStatusCode.BadRequest,
+                    new ApiResponse<object>
+                    {
+                        Status = (int)HttpStatusCode.BadRequest,
+                        Message = exception.Message,
+                        Data = null
+                    });
+            }
+        }
+
         // GET /api/catsubocu
         [HttpGet]
         [Route("")]
@@ -79,6 +126,85 @@ namespace SACIRI_backend.Controllers
                 Message = "Configuraciones CatSubOcu obtenidas correctamente.",
                 Data = new List<CatSubOcuResponse>(registros)
             });
+        }
+
+        // GET /api/catsubocu/{id}
+        [HttpGet]
+        [Route("{id:int}")]
+        public async Task<IHttpActionResult> ObtenerPorId(
+            int id,
+            CancellationToken cancellationToken)
+        {
+            try
+            {
+                var registro = await catSubOcuService.ObtenerPorIdAsync(
+                    id,
+                    cancellationToken);
+
+                if (registro == null)
+                {
+                    return Content(
+                        HttpStatusCode.NotFound,
+                        new ApiResponse<CatSubOcuPorIdResponse>
+                        {
+                            Status = (int)HttpStatusCode.NotFound,
+                            Message = "No se encontrÃ³ la configuraciÃ³n CatSubOcu indicada.",
+                            Data = null
+                        });
+                }
+
+                return Ok(new ApiResponse<CatSubOcuPorIdResponse>
+                {
+                    Status = (int)HttpStatusCode.OK,
+                    Message = "ConfiguraciÃ³n CatSubOcu obtenida correctamente.",
+                    Data = registro
+                });
+            }
+            catch (ArgumentException exception)
+            {
+                return Content(
+                    HttpStatusCode.BadRequest,
+                    new ApiResponse<object>
+                    {
+                        Status = (int)HttpStatusCode.BadRequest,
+                        Message = exception.Message,
+                        Data = null
+                    });
+            }
+        }
+
+        // GET /api/catsubocu/ocurrencia/{idOcurrencia}
+        [HttpGet]
+        [Route("ocurrencia/{idOcurrencia:int}")]
+        public async Task<IHttpActionResult> ObtenerPorOcurrencia(
+            int idOcurrencia,
+            CancellationToken cancellationToken)
+        {
+            try
+            {
+                var registros = await catSubOcuService
+                    .ObtenerPorOcurrenciaAsync(
+                        idOcurrencia,
+                        cancellationToken);
+
+                return Ok(new ApiResponse<List<CatSubOcuPorOcurrenciaResponse>>
+                {
+                    Status = (int)HttpStatusCode.OK,
+                    Message = "Configuraciones CatSubOcu obtenidas correctamente por ocurrencia.",
+                    Data = new List<CatSubOcuPorOcurrenciaResponse>(registros)
+                });
+            }
+            catch (ArgumentException exception)
+            {
+                return Content(
+                    HttpStatusCode.BadRequest,
+                    new ApiResponse<object>
+                    {
+                        Status = (int)HttpStatusCode.BadRequest,
+                        Message = exception.Message,
+                        Data = null
+                    });
+            }
         }
     }
 }

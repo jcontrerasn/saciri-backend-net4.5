@@ -9,5 +9,7 @@ namespace SACIRI_backend.Dtos
 
         [StringLength(100)]
         public string Jefe { get; set; }
+
+        public string Puestos { get; set; }
     }
 }

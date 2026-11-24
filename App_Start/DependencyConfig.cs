@@ -12,7 +12,9 @@ namespace SACIRI_backend
 
         public static UsuarioRolService CreateUsuarioRolService()
         {
-            return new UsuarioRolService(new SqlUsuarioRolRepository());
+            return new UsuarioRolService(
+                new SqlUsuarioRolRepository(),
+                new SqlPuestoRepository());
         }
 
         public static RolService CreateRolService()
@@ -47,6 +49,29 @@ namespace SACIRI_backend
         public static CatSubOcuService CreateCatSubOcuService()
         {
             return new CatSubOcuService(new SqlCatSubOcuRepository());
+        }
+
+        public static ConexionUsuarioService CreateConexionUsuarioService()
+        {
+            return new ConexionUsuarioService(
+                new SqlConexionUsuarioRepository());
+        }
+
+        public static HistorialConexionService CreateHistorialConexionService()
+        {
+            return new HistorialConexionService(
+                new SqlHistorialConexionRepository());
+        }
+
+        public static PuestoService CreatePuestoService()
+        {
+            return new PuestoService(new SqlPuestoRepository());
+        }
+
+        public static AdjuntoSolicitudService CreateAdjuntoSolicitudService()
+        {
+            return new AdjuntoSolicitudService(
+                new SqlAdjuntoSolicitudRepository());
         }
 
         public static SolicitudService CreateSolicitudService()

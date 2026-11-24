@@ -76,7 +76,7 @@ namespace SACIRI_backend.Repositories
                     AgregarEnteroNullable(command, "@Nivel1", registro.Nivel1);
                     AgregarEnteroNullable(command, "@Nivel2", registro.Nivel2);
                     AgregarEnteroNullable(command, "@Nivel3", registro.Nivel3);
-                    AgregarEnteroNullable(command, "@Copia", registro.Copia);
+                    AgregarTexto(command, "@Copia", 100, registro.Copia);
                     AgregarTextoLargo(
                         command, "@DescripcionSubCatOcu",
                         registro.DescripcionSubCatOcu);
@@ -87,6 +87,79 @@ namespace SACIRI_backend.Repositories
 
                     var id = Convert.ToInt32(await command.ExecuteScalarAsync(
                         cancellationToken).ConfigureAwait(false));
+
+                    return await ObtenerPorIdAsync(
+                        connection, id, cancellationToken).ConfigureAwait(false);
+                }
+            }
+        }
+
+        public async Task<CatSubOcu> ActualizarAsync(
+            int id,
+            CatSubOcu registro,
+            CancellationToken cancellationToken = default(CancellationToken))
+        {
+            using (var connection = new SqlConnection(connectionString))
+            {
+                await connection.OpenAsync(cancellationToken)
+                    .ConfigureAwait(false);
+
+                using (var command = new SqlCommand(
+                    "UPDATE dbo.CIRI_CatSubOcu SET "
+                    + "IdTipoRegistro = @IdTipoRegistro, "
+                    + "IdCategoria = @IdCategoria, "
+                    + "IdSubcategoria = @IdSubcategoria, "
+                    + "IdOcurrencia = @IdOcurrencia, "
+                    + "RequiereAprobacion = @RequiereAprobacion, "
+                    + "NivelAprobacion = @NivelAprobacion, "
+                    + "RolAprobacion = @RolAprobacion, "
+                    + "TiempoAtencion = @TiempoAtencion, "
+                    + "Estado = @Estado, Atencion = @Atencion, "
+                    + "Nivel1 = @Nivel1, Nivel2 = @Nivel2, Nivel3 = @Nivel3, "
+                    + "Copia = @Copia, "
+                    + "DescripcionSubCatOcu = @DescripcionSubCatOcu, "
+                    + "DatosAdjuntos = @DatosAdjuntos, "
+                    + "CopiaJefatura = @CopiaJefatura "
+                    + "WHERE Id = @Id", connection))
+                {
+                    command.CommandType = CommandType.Text;
+                    command.CommandTimeout = 30;
+                    AgregarEntero(command, "@Id", id);
+                    AgregarEntero(command, "@IdTipoRegistro", registro.IdTipoRegistro);
+                    AgregarEntero(command, "@IdCategoria", registro.IdCategoria);
+                    AgregarEntero(command, "@IdSubcategoria", registro.IdSubcategoria);
+                    AgregarEntero(command, "@IdOcurrencia", registro.IdOcurrencia);
+                    AgregarBooleano(
+                        command, "@RequiereAprobacion",
+                        registro.RequiereAprobacion);
+                    AgregarTexto(
+                        command, "@NivelAprobacion", 5,
+                        registro.NivelAprobacion);
+                    AgregarTexto(
+                        command, "@RolAprobacion", 10,
+                        registro.RolAprobacion);
+                    AgregarEnteroNullable(
+                        command, "@TiempoAtencion", registro.TiempoAtencion);
+                    AgregarBooleano(command, "@Estado", registro.Estado);
+                    AgregarEnteroNullable(
+                        command, "@Atencion", registro.Atencion);
+                    AgregarEnteroNullable(command, "@Nivel1", registro.Nivel1);
+                    AgregarEnteroNullable(command, "@Nivel2", registro.Nivel2);
+                    AgregarEnteroNullable(command, "@Nivel3", registro.Nivel3);
+                    AgregarTexto(command, "@Copia", 100, registro.Copia);
+                    AgregarTextoLargo(
+                        command, "@DescripcionSubCatOcu",
+                        registro.DescripcionSubCatOcu);
+                    AgregarBooleano(
+                        command, "@DatosAdjuntos", registro.DatosAdjuntos);
+                    AgregarBooleano(
+                        command, "@CopiaJefatura", registro.CopiaJefatura);
+
+                    if (await command.ExecuteNonQueryAsync(
+                        cancellationToken).ConfigureAwait(false) == 0)
+                    {
+                        return null;
+                    }
 
                     return await ObtenerPorIdAsync(
                         connection, id, cancellationToken).ConfigureAwait(false);
@@ -165,13 +238,72 @@ namespace SACIRI_backend.Repositories
                             Nivel1 = LeerEnteroNullable(reader, "Nivel1"),
                             Nivel2 = LeerEnteroNullable(reader, "Nivel2"),
                             Nivel3 = LeerEnteroNullable(reader, "Nivel3"),
-                            Copia = LeerEnteroNullable(reader, "Copia"),
+                            Copia = LeerTexto(reader, "Copia"),
                             DescripcionSubCatOcu = LeerTexto(
                                 reader, "DescripcionSubCatOcu"),
                             DatosAdjuntos = Convert.ToBoolean(
                                 reader["DatosAdjuntos"]),
                             CopiaJefatura = Convert.ToBoolean(
                                 reader["CopiaJefatura"])
+                        });
+                    }
+                }
+            }
+
+            return registros;
+        }
+
+        public async Task<CatSubOcu> ObtenerPorIdAsync(
+            int id,
+            CancellationToken cancellationToken = default(CancellationToken))
+        {
+            using (var connection = new SqlConnection(connectionString))
+            {
+                await connection.OpenAsync(cancellationToken)
+                    .ConfigureAwait(false);
+
+                return await ObtenerPorIdAsync(
+                    connection, id, cancellationToken).ConfigureAwait(false);
+            }
+        }
+
+        public async Task<IList<CatSubOcu>> ObtenerPorOcurrenciaAsync(
+            int idOcurrencia,
+            CancellationToken cancellationToken = default(CancellationToken))
+        {
+            var registros = new List<CatSubOcu>();
+
+            using (var connection = new SqlConnection(connectionString))
+            using (var command = new SqlCommand(
+                "SELECT Copia, DatosAdjuntos, CopiaJefatura, "
+                + "DescripcionSubCatOcu "
+                + "FROM dbo.CIRI_CatSubOcu "
+                + "WHERE IdOcurrencia = @IdOcurrencia "
+                + "ORDER BY Id", connection))
+            {
+                command.CommandType = CommandType.Text;
+                command.CommandTimeout = 30;
+                command.Parameters.Add(
+                    "@IdOcurrencia", SqlDbType.Int).Value = idOcurrencia;
+
+                await connection.OpenAsync(cancellationToken)
+                    .ConfigureAwait(false);
+
+                using (var reader = await command.ExecuteReaderAsync(
+                    cancellationToken).ConfigureAwait(false))
+                {
+                    while (await reader.ReadAsync(cancellationToken)
+                        .ConfigureAwait(false))
+                    {
+                        registros.Add(new CatSubOcu
+                        {
+                            Copia = LeerTexto(reader, "Copia"),
+                            DatosAdjuntos = Convert.ToBoolean(
+                                reader["DatosAdjuntos"]),
+                            CopiaJefatura = Convert.ToBoolean(
+                                reader["CopiaJefatura"]),
+                            DescripcionSubCatOcu = LeerTexto(
+                                reader, "DescripcionSubCatOcu")
                         });
                     }
                 }
@@ -251,7 +383,7 @@ namespace SACIRI_backend.Repositories
                 Nivel1 = LeerEnteroNullable(reader, "Nivel1"),
                 Nivel2 = LeerEnteroNullable(reader, "Nivel2"),
                 Nivel3 = LeerEnteroNullable(reader, "Nivel3"),
-                Copia = LeerEnteroNullable(reader, "Copia"),
+                Copia = LeerTexto(reader, "Copia"),
                 DescripcionSubCatOcu = LeerTexto(
                     reader, "DescripcionSubCatOcu"),
                 DatosAdjuntos = Convert.ToBoolean(reader["DatosAdjuntos"]),

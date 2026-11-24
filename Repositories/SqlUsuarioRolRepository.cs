@@ -17,11 +17,19 @@ namespace SACIRI_backend.Repositories
         private const string SelectSql =
             "SELECT usuarioRol.IdUsuarioRol, "
             + "usuarioRol.Usuario, usuarioRol.IdRol, "
-            + "rol.Nombre AS Rol, usuarioRol.Jefe, usuarioRol.Activo, "
+            + "rol.Nombre AS Rol, usuarioRol.Jefe, usuarioRol.Puestos, "
+            + "conexionUsuario.Estado AS EstadoConexion, "
+            + "usuarioRol.Activo, "
             + "usuarioRol.FechaRegistro "
             + "FROM dbo.CIRI_UsuariosRoles AS usuarioRol "
             + "INNER JOIN dbo.CIRI_Roles AS rol "
-            + "ON rol.IdRol = usuarioRol.IdRol ";
+            + "ON rol.IdRol = usuarioRol.IdRol "
+            + "OUTER APPLY ("
+            + "SELECT TOP (1) conexion.Estado "
+            + "FROM dbo.CIRI_ConexionesUsuarios AS conexion "
+            + "WHERE conexion.Usuario = usuarioRol.Usuario "
+            + "ORDER BY conexion.IdConexion DESC"
+            + ") AS conexionUsuario ";
 
         public SqlUsuarioRolRepository()
         {
@@ -65,6 +73,7 @@ namespace SACIRI_backend.Repositories
             string usuario,
             int idRol,
             string jefe,
+            string puestos,
             CancellationToken cancellationToken = default(CancellationToken))
         {
             using (var connection = new SqlConnection(connectionString))
@@ -72,22 +81,66 @@ namespace SACIRI_backend.Repositories
                 await connection.OpenAsync(cancellationToken)
                     .ConfigureAwait(false);
 
-                using (var command = new SqlCommand(
-                    "INSERT INTO dbo.CIRI_UsuariosRoles "
-                    + "(Usuario, IdRol, Jefe, Activo, FechaRegistro) "
-                    + "VALUES (@Usuario, @IdRol, @Jefe, 1, GETDATE()); "
-                    + "SELECT CAST(SCOPE_IDENTITY() AS INT);",
-                    connection))
+                using (var transaction = connection.BeginTransaction())
                 {
-                    command.CommandType = CommandType.Text;
-                    command.CommandTimeout = 30;
-                    AgregarTexto(command, "@Usuario", 100, usuario);
-                    AgregarEntero(command, "@IdRol", idRol);
-                    AgregarTexto(command, "@Jefe", 100, jefe);
+                    var idUsuarioRol = 0;
 
-                    var idUsuarioRol = Convert.ToInt32(
-                        await command.ExecuteScalarAsync(
-                            cancellationToken).ConfigureAwait(false));
+                    try
+                    {
+                        using (var command = new SqlCommand(
+                            "SET XACT_ABORT ON; "
+                            + "DECLARE @IdUsuarioRol INT; "
+                            + "INSERT INTO dbo.CIRI_UsuariosRoles "
+                            + "(Usuario, IdRol, Jefe, Puestos, Activo, FechaRegistro) "
+                            + "VALUES (@Usuario, @IdRol, @Jefe, @Puestos, 1, GETDATE()); "
+                            + "SET @IdUsuarioRol = CAST(SCOPE_IDENTITY() AS INT); "
+                            + "IF NOT EXISTS ("
+                            + "SELECT 1 FROM dbo.CIRI_ConexionesUsuarios "
+                            + "WITH (UPDLOCK, HOLDLOCK) "
+                            + "WHERE Usuario = @Usuario) "
+                            + "AND NOT EXISTS ("
+                            + "SELECT 1 FROM dbo.CIRI_HistorialConexiones "
+                            + "WITH (UPDLOCK, HOLDLOCK) "
+                            + "WHERE Usuario = @Usuario) "
+                            + "BEGIN "
+                            + "INSERT INTO dbo.CIRI_ConexionesUsuarios "
+                            + "(Usuario, Fecha, Estado) "
+                            + "VALUES (@Usuario, SYSDATETIME(), 0); "
+                            + "INSERT INTO dbo.CIRI_HistorialConexiones "
+                            + "(Usuario, Estado, Sustento) "
+                            + "VALUES (@Usuario, 0, N'Registro'); "
+                            + "END; "
+                            + "SELECT @IdUsuarioRol;",
+                            connection,
+                            transaction))
+                        {
+                            command.CommandType = CommandType.Text;
+                            command.CommandTimeout = 30;
+                            AgregarTexto(command, "@Usuario", 100, usuario);
+                            AgregarEntero(command, "@IdRol", idRol);
+                            AgregarTexto(command, "@Jefe", 100, jefe);
+                            AgregarTextoLargo(command, "@Puestos", puestos);
+
+                            idUsuarioRol = Convert.ToInt32(
+                                await command.ExecuteScalarAsync(
+                                    cancellationToken).ConfigureAwait(false));
+
+                            transaction.Commit();
+                        }
+                    }
+                    catch
+                    {
+                        try
+                        {
+                            transaction.Rollback();
+                        }
+                        catch
+                        {
+                            // La transacciÃ³n puede ya estar confirmada o revertida.
+                        }
+
+                        throw;
+                    }
 
                     return await ObtenerPorIdAsync(
                         connection,
@@ -126,10 +179,48 @@ namespace SACIRI_backend.Repositories
             return usuariosRoles;
         }
 
+        public async Task<IList<UsuarioRol>> BuscarPorUsuarioAsync(
+            string filtro,
+            CancellationToken cancellationToken = default(CancellationToken))
+        {
+            var usuariosRoles = new List<UsuarioRol>();
+
+            using (var connection = new SqlConnection(connectionString))
+            using (var command = new SqlCommand(
+                SelectSql
+                + "WHERE usuarioRol.Activo = 1 "
+                + "AND usuarioRol.Usuario LIKE @Filtro "
+                + "ORDER BY usuarioRol.IdUsuarioRol",
+                connection))
+            {
+                command.CommandType = CommandType.Text;
+                command.CommandTimeout = 30;
+                command.Parameters.Add(
+                    "@Filtro", SqlDbType.VarChar, 102).Value =
+                    "%" + filtro + "%";
+
+                await connection.OpenAsync(cancellationToken)
+                    .ConfigureAwait(false);
+
+                using (var reader = await command.ExecuteReaderAsync(
+                    cancellationToken).ConfigureAwait(false))
+                {
+                    while (await reader.ReadAsync(cancellationToken)
+                        .ConfigureAwait(false))
+                    {
+                        usuariosRoles.Add(LeerUsuarioRol(reader));
+                    }
+                }
+            }
+
+            return usuariosRoles;
+        }
+
         public async Task<UsuarioRol> ActualizarAsync(
             int idUsuarioRol,
             int idRol,
             string jefe,
+            string puestos,
             CancellationToken cancellationToken = default(CancellationToken))
         {
             using (var connection = new SqlConnection(connectionString))
@@ -139,13 +230,14 @@ namespace SACIRI_backend.Repositories
 
                 using (var command = new SqlCommand(
                     "UPDATE dbo.CIRI_UsuariosRoles "
-                    + "SET IdRol = @IdRol, Jefe = @Jefe "
+                    + "SET IdRol = @IdRol, Jefe = @Jefe, Puestos = @Puestos "
                     + "WHERE IdUsuarioRol = @IdUsuarioRol", connection))
                 {
                     command.CommandType = CommandType.Text;
                     command.CommandTimeout = 30;
                     AgregarEntero(command, "@IdRol", idRol);
                     AgregarTexto(command, "@Jefe", 100, jefe);
+                    AgregarTextoLargo(command, "@Puestos", puestos);
                     AgregarEntero(command, "@IdUsuarioRol", idUsuarioRol);
 
                     if (await command.ExecuteNonQueryAsync(
@@ -231,6 +323,10 @@ namespace SACIRI_backend.Repositories
                     Nombre = LeerTexto(reader, "Rol")
                 },
                 Jefe = LeerTexto(reader, "Jefe"),
+                Puestos = LeerTexto(reader, "Puestos"),
+                EstadoConexion = reader["EstadoConexion"] == DBNull.Value
+                    ? false
+                    : Convert.ToBoolean(reader["EstadoConexion"]),
                 Activo = Convert.ToBoolean(reader["Activo"]),
                 FechaRegistro = Convert.ToDateTime(reader["FechaRegistro"])
             };
@@ -266,6 +362,18 @@ namespace SACIRI_backend.Repositories
                 nombre, SqlDbType.Int)
             {
                 Value = valor
+            });
+        }
+
+        private static void AgregarTextoLargo(
+            SqlCommand command,
+            string nombre,
+            string valor)
+        {
+            command.Parameters.Add(new SqlParameter(
+                nombre, SqlDbType.VarChar, -1)
+            {
+                Value = (object)valor ?? DBNull.Value
             });
         }
     }

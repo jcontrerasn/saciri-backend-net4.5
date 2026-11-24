@@ -20,7 +20,7 @@ namespace SACIRI_backend.Entities
         public int? Nivel1 { get; set; }
         public int? Nivel2 { get; set; }
         public int? Nivel3 { get; set; }
-        public int? Copia { get; set; }
+        public string Copia { get; set; }
         public string DescripcionSubCatOcu { get; set; }
         public bool DatosAdjuntos { get; set; }
         public bool CopiaJefatura { get; set; }

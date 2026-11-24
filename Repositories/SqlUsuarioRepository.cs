@@ -44,6 +44,8 @@ namespace SACIRI_backend.Repositories
                 await connection.OpenAsync(cancellationToken)
                     .ConfigureAwait(false);
 
+                Usuario usuario;
+
                 using (var reader = await command.ExecuteReaderAsync(
                     CommandBehavior.SingleRow, cancellationToken)
                     .ConfigureAwait(false))
@@ -54,14 +56,54 @@ namespace SACIRI_backend.Repositories
                         return null;
                     }
 
-                    return new Usuario
+                    usuario = new Usuario
                     {
                         Cuenta = LeerTexto(reader, "Usuario"),
                         NombreCompleto = LeerTexto(reader, "NombreCompleto"),
                         Area = LeerTexto(reader, "Area")
                     };
                 }
+
+                return await AgregarRolAsync(
+                    connection,
+                    usuario,
+                    cancellationToken).ConfigureAwait(false);
             }
+        }
+
+        private static async Task<Usuario> AgregarRolAsync(
+            SqlConnection connection,
+            Usuario usuario,
+            CancellationToken cancellationToken)
+        {
+            using (var command = new SqlCommand(
+                "SELECT TOP (1) rol.Nombre "
+                + "FROM dbo.CIRI_UsuariosRoles AS usuarioRol "
+                + "INNER JOIN dbo.CIRI_Roles AS rol "
+                + "ON rol.IdRol = usuarioRol.IdRol "
+                + "WHERE usuarioRol.Usuario = @Usuario "
+                + "AND usuarioRol.Activo = 1 "
+                + "ORDER BY usuarioRol.IdUsuarioRol",
+                connection))
+            {
+                command.CommandType = CommandType.Text;
+                command.CommandTimeout = 30;
+                command.Parameters.Add(
+                    "@Usuario", SqlDbType.VarChar, 100).Value = usuario.Cuenta;
+
+                using (var reader = await command.ExecuteReaderAsync(
+                    CommandBehavior.SingleRow,
+                    cancellationToken).ConfigureAwait(false))
+                {
+                    if (await reader.ReadAsync(cancellationToken)
+                        .ConfigureAwait(false))
+                    {
+                        usuario.Rol = LeerTexto(reader, "Nombre");
+                    }
+                }
+            }
+
+            return usuario;
         }
 
         public async Task<IList<Usuario>> BuscarPorFiltroAsync(
