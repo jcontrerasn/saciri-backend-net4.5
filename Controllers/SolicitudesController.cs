@@ -72,8 +72,8 @@ namespace SACIRI_backend.Controllers
             Directory.CreateDirectory(tempDirectory);
 
             var provider = new MultipartFormDataStreamProvider(tempDirectory);
-            string archivoTemporal = null;
-            string rutaFisica = null;
+            var archivosTemporales = new List<string>();
+            var rutasFisicas = new List<string>();
 
             try
             {
@@ -81,14 +81,19 @@ namespace SACIRI_backend.Controllers
                     provider,
                     cancellationToken).ConfigureAwait(false);
 
-                var archivo = provider.FileData.FirstOrDefault();
-                if (archivo == null)
+                var archivos = provider.FileData.ToList();
+                if (archivos.Count == 0)
                 {
                     throw new ArgumentException(
-                        "Debe enviar un archivo en el campo 'archivo'.");
+                        "Debe enviar al menos un archivo en el campo 'archivo'.");
                 }
 
-                archivoTemporal = archivo.LocalFileName;
+                archivosTemporales = archivos.Select(
+                    item => item.LocalFileName).ToList();
+                var archivosPreparados = new List<ArchivoAdjuntoTemporal>();
+
+                foreach (var archivo in archivos)
+                {
                 var contentDisposition = archivo.Headers.ContentDisposition;
                 var nombreOriginal = contentDisposition == null
                     ? null
@@ -110,16 +115,28 @@ namespace SACIRI_backend.Controllers
                         : archivo.Headers.ContentType.MediaType
                     : extension.TrimStart('.');
 
-                var request = CrearSolicitudRequest(provider);
-                var adjuntadoPor = ObtenerCampo(provider, "adjuntadoPor")
-                    ?? request.CreadoPor;
-                var tamanoAdjunto = new FileInfo(archivoTemporal).Length;
+                var tamanoAdjunto = new FileInfo(
+                    archivo.LocalFileName).Length;
+                archivosPreparados.Add(new ArchivoAdjuntoTemporal
+                {
+                    Archivo = archivo,
+                    NombreAdjunto = nombreAdjunto,
+                    Formato = formato,
+                    TamanoAdjunto = tamanoAdjunto
+                });
+                }
 
-                ValidarDatosAdjunto(
-                    nombreAdjunto,
-                    formato,
-                    tamanoAdjunto,
-                    adjuntadoPor);
+                var request = CrearSolicitudRequest(provider);
+                var adjuntadoPor = request.CreadoPor;
+
+                foreach (var archivoPreparado in archivosPreparados)
+                {
+                    ValidarDatosAdjunto(
+                        archivoPreparado.NombreAdjunto,
+                        archivoPreparado.Formato,
+                        archivoPreparado.TamanoAdjunto,
+                        adjuntadoPor);
+                }
 
                 var response = await solicitudService.RegistrarAsync(
                     request,
@@ -131,9 +148,6 @@ namespace SACIRI_backend.Controllers
                         "No se pudo obtener el IdSolicitud registrado.");
                 }
 
-                var nombreSeguro = SanitizarNombre(nombreAdjunto);
-                var nombreGuardado = Guid.NewGuid().ToString("N")
-                    + "_" + nombreSeguro;
                 var directorioSolicitud = Path.Combine(
                     rootDirectory,
                     "uploads",
@@ -141,30 +155,38 @@ namespace SACIRI_backend.Controllers
                     response.IdSolicitud.ToString());
                 Directory.CreateDirectory(directorioSolicitud);
 
-                rutaFisica = Path.Combine(
-                    directorioSolicitud,
-                    nombreGuardado);
-                File.Move(archivoTemporal, rutaFisica);
-                archivoTemporal = null;
-
-                var ruta = "uploads/solicitudes/"
-                    + response.IdSolicitud + "/" + nombreGuardado;
-                var adjunto = await adjuntoSolicitudService.CrearAsync(
-                    response.IdSolicitud,
-                    nombreAdjunto,
-                    formato,
-                    tamanoAdjunto,
-                    ruta,
-                    adjuntadoPor,
-                    cancellationToken,
-                    true).ConfigureAwait(false);
-
-                if (adjunto == null)
+                foreach (var archivoPreparado in archivosPreparados)
                 {
-                    EliminarArchivo(rutaFisica);
-                    rutaFisica = null;
+                    var nombreSeguro = SanitizarNombre(
+                        archivoPreparado.NombreAdjunto);
+                    var nombreGuardado = Guid.NewGuid().ToString("N")
+                        + "_" + nombreSeguro;
+                    var rutaFisica = Path.Combine(
+                        directorioSolicitud,
+                        nombreGuardado);
+
+                    File.Move(
+                        archivoPreparado.Archivo.LocalFileName,
+                        rutaFisica);
+                    rutasFisicas.Add(rutaFisica);
+
+                    var ruta = "uploads/solicitudes/"
+                        + response.IdSolicitud + "/" + nombreGuardado;
+                    var adjunto = await adjuntoSolicitudService.CrearAsync(
+                        response.IdSolicitud,
+                        archivoPreparado.NombreAdjunto,
+                        archivoPreparado.Formato,
+                        archivoPreparado.TamanoAdjunto,
+                        ruta,
+                        adjuntadoPor,
+                        cancellationToken,
+                        true).ConfigureAwait(false);
+
+                    if (adjunto == null)
+                    {
                     throw new InvalidOperationException(
                         "No se encontró el primer historial de la solicitud.");
+                    }
                 }
 
                 return Content(
@@ -178,8 +200,8 @@ namespace SACIRI_backend.Controllers
             }
             catch (ArgumentException exception)
             {
-                EliminarArchivo(archivoTemporal);
-                EliminarArchivo(rutaFisica);
+                EliminarArchivos(archivosTemporales);
+                EliminarArchivos(rutasFisicas);
                 return Content(
                     HttpStatusCode.BadRequest,
                     new ApiResponse<object>
@@ -191,8 +213,8 @@ namespace SACIRI_backend.Controllers
             }
             catch (InvalidOperationException exception)
             {
-                EliminarArchivo(archivoTemporal);
-                EliminarArchivo(rutaFisica);
+                EliminarArchivos(archivosTemporales);
+                EliminarArchivos(rutasFisicas);
                 return Content(
                     HttpStatusCode.InternalServerError,
                     new ApiResponse<object>
@@ -204,8 +226,8 @@ namespace SACIRI_backend.Controllers
             }
             catch
             {
-                EliminarArchivo(archivoTemporal);
-                EliminarArchivo(rutaFisica);
+                EliminarArchivos(archivosTemporales);
+                EliminarArchivos(rutasFisicas);
                 throw;
             }
         }
@@ -228,6 +250,14 @@ namespace SACIRI_backend.Controllers
                 Descripcion = ObtenerCampo(provider, "descripcion"),
                 Recomendacion = ObtenerCampo(provider, "recomendacion")
             };
+        }
+
+        private sealed class ArchivoAdjuntoTemporal
+        {
+            public MultipartFileData Archivo { get; set; }
+            public string NombreAdjunto { get; set; }
+            public string Formato { get; set; }
+            public long TamanoAdjunto { get; set; }
         }
 
         private static string ObtenerCampo(
@@ -277,6 +307,14 @@ namespace SACIRI_backend.Controllers
             if (!string.IsNullOrWhiteSpace(ruta) && File.Exists(ruta))
             {
                 File.Delete(ruta);
+            }
+        }
+
+        private static void EliminarArchivos(IEnumerable<string> rutas)
+        {
+            foreach (var ruta in rutas)
+            {
+                EliminarArchivo(ruta);
             }
         }
 
