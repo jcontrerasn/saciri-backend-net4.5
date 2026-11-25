@@ -139,6 +139,20 @@ namespace SACIRI_backend.Repositories
                             };
 
                             solicitud.Adjuntos.Add(adjunto);
+                            if (adjunto.IdComentario.HasValue)
+                            {
+                                foreach (var comentario
+                                    in solicitud.Comentarios)
+                                {
+                                    if (comentario.IdComentario
+                                        == adjunto.IdComentario.Value)
+                                    {
+                                        comentario.Adjuntos.Add(adjunto);
+                                        break;
+                                    }
+                                }
+                            }
+
                             if (!string.IsNullOrWhiteSpace(adjunto.Ruta))
                             {
                                 solicitud.RutasAdjuntos.Add(adjunto.Ruta);

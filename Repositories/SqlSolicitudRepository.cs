@@ -136,7 +136,7 @@ namespace SACIRI_backend.Repositories
                 command.Parameters.Add(
                     "@Pusuario_c", SqlDbType.VarChar, 100).Value = usuario;
                 command.Parameters.Add(
-                    "@Pflag_c", SqlDbType.VarChar, 5).Value = flag;
+                    "@Pflag_c", SqlDbType.VarChar, 30).Value = flag;
 
                 await connection.OpenAsync(cancellationToken)
                     .ConfigureAwait(false);
@@ -412,7 +412,9 @@ namespace SACIRI_backend.Repositories
                     return new SolicitudEnProcesoResponse
                     {
                         Success = Convert.ToBoolean(reader["Success"]),
-                        Mensaje = Convert.ToString(reader["Mensaje"])
+                        Mensaje = Convert.ToString(reader["Mensaje"]),
+                        IdComentario = Convert.ToInt32(
+                            reader["IdComentario"])
                     };
                 }
             }
@@ -456,7 +458,9 @@ namespace SACIRI_backend.Repositories
                     return new SolicitudEnProcesoResponse
                     {
                         Success = Convert.ToBoolean(reader["Success"]),
-                        Mensaje = Convert.ToString(reader["Mensaje"])
+                        Mensaje = Convert.ToString(reader["Mensaje"]),
+                        IdComentario = Convert.ToInt32(
+                            reader["IdComentario"])
                     };
                 }
             }
@@ -503,7 +507,9 @@ namespace SACIRI_backend.Repositories
                     return new SolicitudEnProcesoResponse
                     {
                         Success = Convert.ToBoolean(reader["Success"]),
-                        Mensaje = Convert.ToString(reader["Mensaje"])
+                        Mensaje = Convert.ToString(reader["Mensaje"]),
+                        IdComentario = Convert.ToInt32(
+                            reader["IdComentario"])
                     };
                 }
             }
@@ -550,7 +556,9 @@ namespace SACIRI_backend.Repositories
                     return new SolicitudEnProcesoResponse
                     {
                         Success = Convert.ToBoolean(reader["Success"]),
-                        Mensaje = Convert.ToString(reader["Mensaje"])
+                        Mensaje = Convert.ToString(reader["Mensaje"]),
+                        IdComentario = Convert.ToInt32(
+                            reader["IdComentario"])
                     };
                 }
             }

@@ -1,6 +1,6 @@
 USE [SM_PRUEBA]
 GO
-/****** Object:  StoredProcedure [dbo].[pr_ciri_BuscarSolicitudXCodigoSolicitud]    Script Date: 24/11/2026 18:04:55 ******/
+/****** Object:  StoredProcedure [dbo].[pr_ciri_BuscarSolicitudXCodigoSolicitud]    Script Date: 25/11/2026 13:08:57 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON

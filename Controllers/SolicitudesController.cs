@@ -82,12 +82,6 @@ namespace SACIRI_backend.Controllers
                     cancellationToken).ConfigureAwait(false);
 
                 var archivos = provider.FileData.ToList();
-                if (archivos.Count == 0)
-                {
-                    throw new ArgumentException(
-                        "Debe enviar al menos un archivo en el campo 'archivo'.");
-                }
-
                 archivosTemporales = archivos.Select(
                     item => item.LocalFileName).ToList();
                 var archivosPreparados = new List<ArchivoAdjuntoTemporal>();
@@ -263,11 +257,17 @@ namespace SACIRI_backend.Controllers
 
         private static List<ArchivoAdjuntoTemporal> PrepararArchivos(
             MultipartFormDataStreamProvider provider,
-            IList<string> archivosTemporales)
+            IList<string> archivosTemporales,
+            bool requiereArchivo = true)
         {
             var archivos = provider.FileData.ToList();
             if (archivos.Count == 0)
             {
+                if (!requiereArchivo)
+                {
+                    return new List<ArchivoAdjuntoTemporal>();
+                }
+
                 throw new ArgumentException(
                     "Debe enviar al menos un archivo en el campo 'archivo'.");
             }
@@ -561,7 +561,8 @@ namespace SACIRI_backend.Controllers
 
                 var archivosPreparados = PrepararArchivos(
                     provider,
-                    archivosTemporales);
+                    archivosTemporales,
+                    false);
                 var request = new SolicitarInformacionRequest
                 {
                     IdSolicitud = ObtenerEntero(provider, "idSolicitud"),
@@ -709,7 +710,8 @@ namespace SACIRI_backend.Controllers
 
                 var archivosPreparados = PrepararArchivos(
                     provider,
-                    archivosTemporales);
+                    archivosTemporales,
+                    false);
                 var request = new EnviarInformacionRequest
                 {
                     IdSolicitud = ObtenerEntero(provider, "idSolicitud"),
@@ -823,123 +825,208 @@ namespace SACIRI_backend.Controllers
         [HttpPost]
         [Route("anular")]
         public async Task<IHttpActionResult> AnularSolicitud(
-            [FromBody] AnularSolicitudRequest request,
             CancellationToken cancellationToken)
         {
-            try
-            {
-                var response = await solicitudService.AnularSolicitudAsync(
-                    request,
-                    cancellationToken);
-
-                return Ok(new ApiResponse<SolicitudEnProcesoResponse>
-                {
-                    Status = (int)HttpStatusCode.OK,
-                    Message = "Solicitud anulada correctamente.",
-                    Data = response
-                });
-            }
-            catch (ArgumentException exception)
-            {
-                return Content(
-                    HttpStatusCode.BadRequest,
-                    new ApiResponse<object>
-                    {
-                        Status = (int)HttpStatusCode.BadRequest,
-                        Message = exception.Message,
-                        Data = null
-                    });
-            }
+            return await ProcesarAccionConArchivosAsync(
+                async (idSolicitud, comentario, usuario, asignadoA, token) =>
+                    await solicitudService.AnularSolicitudAsync(
+                        new AnularSolicitudRequest
+                        {
+                            IdSolicitud = idSolicitud,
+                            Comentario = comentario,
+                            Usuario = usuario
+                        },
+                        token).ConfigureAwait(false),
+                "Solicitud anulada correctamente.",
+                cancellationToken).ConfigureAwait(false);
         }
 
         // POST /api/solicitudes/finalizar
         [HttpPost]
         [Route("finalizar")]
         public async Task<IHttpActionResult> FinalizarSolicitud(
-            [FromBody] FinalizarSolicitudRequest request,
             CancellationToken cancellationToken)
         {
-            try
-            {
-                var response = await solicitudService.FinalizarSolicitudAsync(
-                    request,
-                    cancellationToken);
-
-                return Ok(new ApiResponse<SolicitudEnProcesoResponse>
-                {
-                    Status = (int)HttpStatusCode.OK,
-                    Message = "Solicitud finalizada correctamente.",
-                    Data = response
-                });
-            }
-            catch (ArgumentException exception)
-            {
-                return Content(
-                    HttpStatusCode.BadRequest,
-                    new ApiResponse<object>
-                    {
-                        Status = (int)HttpStatusCode.BadRequest,
-                        Message = exception.Message,
-                        Data = null
-                    });
-            }
+            return await ProcesarAccionConArchivosAsync(
+                async (idSolicitud, comentario, usuario, asignadoA, token) =>
+                    await solicitudService.FinalizarSolicitudAsync(
+                        new FinalizarSolicitudRequest
+                        {
+                            IdSolicitud = idSolicitud,
+                            Comentario = comentario,
+                            Usuario = usuario
+                        },
+                        token).ConfigureAwait(false),
+                "Solicitud finalizada correctamente.",
+                cancellationToken).ConfigureAwait(false);
         }
 
         // POST /api/solicitudes/reasignar
         [HttpPost]
         [Route("reasignar")]
         public async Task<IHttpActionResult> ReasignarSolicitud(
-            [FromBody] ReasignarSolicitudRequest request,
             CancellationToken cancellationToken)
         {
-            try
-            {
-                var response = await solicitudService.ReasignarSolicitudAsync(
-                    request,
-                    cancellationToken);
-
-                return Ok(new ApiResponse<SolicitudEnProcesoResponse>
-                {
-                    Status = (int)HttpStatusCode.OK,
-                    Message = "Solicitud reasignada correctamente.",
-                    Data = response
-                });
-            }
-            catch (ArgumentException exception)
-            {
-                return Content(
-                    HttpStatusCode.BadRequest,
-                    new ApiResponse<object>
-                    {
-                        Status = (int)HttpStatusCode.BadRequest,
-                        Message = exception.Message,
-                        Data = null
-                    });
-            }
+            return await ProcesarAccionConArchivosAsync(
+                async (idSolicitud, comentario, usuario, asignadoA, token) =>
+                    await solicitudService.ReasignarSolicitudAsync(
+                        new ReasignarSolicitudRequest
+                        {
+                            IdSolicitud = idSolicitud,
+                            Comentario = comentario,
+                            Usuario = usuario,
+                            AsignadoA = asignadoA
+                        },
+                        token).ConfigureAwait(false),
+                "Solicitud reasignada correctamente.",
+                cancellationToken).ConfigureAwait(false);
         }
 
         // POST /api/solicitudes/derivar
         [HttpPost]
         [Route("derivar")]
         public async Task<IHttpActionResult> DerivarSolicitud(
-            [FromBody] DerivarSolicitudRequest request,
             CancellationToken cancellationToken)
         {
+            return await ProcesarAccionConArchivosAsync(
+                async (idSolicitud, comentario, usuario, asignadoA, token) =>
+                    await solicitudService.DerivarSolicitudAsync(
+                        new DerivarSolicitudRequest
+                        {
+                            IdSolicitud = idSolicitud,
+                            Comentario = comentario,
+                            Usuario = usuario,
+                            AsignadoA = asignadoA
+                        },
+                        token).ConfigureAwait(false),
+                "Solicitud derivada correctamente.",
+                cancellationToken).ConfigureAwait(false);
+        }
+
+        private async Task<IHttpActionResult> ProcesarAccionConArchivosAsync(
+            Func<int, string, string, string, CancellationToken,
+                Task<SolicitudEnProcesoResponse>> ejecutar,
+            string mensaje,
+            CancellationToken cancellationToken)
+        {
+            if (Request.Content == null
+                || !Request.Content.IsMimeMultipartContent())
+            {
+                return Content(
+                    HttpStatusCode.UnsupportedMediaType,
+                    new ApiResponse<object>
+                    {
+                        Status = (int)HttpStatusCode.UnsupportedMediaType,
+                        Message = "La solicitud debe ser multipart/form-data.",
+                        Data = null
+                    });
+            }
+
+            var rootDirectory = AppDomain.CurrentDomain.BaseDirectory;
+            var tempDirectory = Path.Combine(
+                rootDirectory,
+                "App_Data",
+                "uploads-temp");
+            Directory.CreateDirectory(tempDirectory);
+
+            var provider = new MultipartFormDataStreamProvider(tempDirectory);
+            var archivosTemporales = new List<string>();
+            var rutasFisicas = new List<string>();
+
             try
             {
-                var response = await solicitudService.DerivarSolicitudAsync(
-                    request,
-                    cancellationToken);
+                await Request.Content.ReadAsMultipartAsync(
+                    provider,
+                    cancellationToken).ConfigureAwait(false);
+
+                var archivosPreparados = PrepararArchivos(
+                    provider,
+                    archivosTemporales,
+                    false);
+                var idSolicitud = ObtenerEntero(provider, "idSolicitud");
+                var comentario = ObtenerCampo(provider, "comentario");
+                var usuario = ObtenerCampo(provider, "usuario");
+                var asignadoA = ObtenerCampo(provider, "asignadoA");
+
+                foreach (var archivoPreparado in archivosPreparados)
+                {
+                    ValidarDatosAdjunto(
+                        archivoPreparado.NombreAdjunto,
+                        archivoPreparado.Formato,
+                        archivoPreparado.TamanoAdjunto,
+                        usuario);
+                }
+
+                var response = await ejecutar(
+                    idSolicitud,
+                    comentario,
+                    usuario,
+                    asignadoA,
+                    cancellationToken).ConfigureAwait(false);
+
+                if (archivosPreparados.Count > 0
+                    && (response == null || !response.IdComentario.HasValue))
+                {
+                    throw new InvalidOperationException(
+                        "No se pudo obtener el comentario registrado.");
+                }
+
+                if (archivosPreparados.Count > 0)
+                {
+                    var directorioSolicitud = Path.Combine(
+                        rootDirectory,
+                        "uploads",
+                        "solicitudes",
+                        idSolicitud.ToString());
+                    Directory.CreateDirectory(directorioSolicitud);
+
+                    foreach (var archivoPreparado in archivosPreparados)
+                    {
+                        var nombreSeguro = SanitizarNombre(
+                            archivoPreparado.NombreAdjunto);
+                        var nombreGuardado = Guid.NewGuid().ToString("N")
+                            + "_" + nombreSeguro;
+                        var rutaFisica = Path.Combine(
+                            directorioSolicitud,
+                            nombreGuardado);
+
+                        File.Move(
+                            archivoPreparado.Archivo.LocalFileName,
+                            rutaFisica);
+                        rutasFisicas.Add(rutaFisica);
+
+                        var ruta = "uploads/solicitudes/"
+                            + idSolicitud + "/" + nombreGuardado;
+                        var adjunto = await adjuntoSolicitudService.CrearAsync(
+                            idSolicitud,
+                            archivoPreparado.NombreAdjunto,
+                            archivoPreparado.Formato,
+                            archivoPreparado.TamanoAdjunto,
+                            ruta,
+                            usuario,
+                            cancellationToken,
+                            false,
+                            response.IdComentario).ConfigureAwait(false);
+
+                        if (adjunto == null)
+                        {
+                            throw new InvalidOperationException(
+                                "No se pudo registrar el archivo adjunto.");
+                        }
+                    }
+                }
 
                 return Ok(new ApiResponse<SolicitudEnProcesoResponse>
                 {
                     Status = (int)HttpStatusCode.OK,
-                    Message = "Solicitud derivada correctamente.",
+                    Message = mensaje,
                     Data = response
                 });
             }
             catch (ArgumentException exception)
             {
+                EliminarArchivos(archivosTemporales);
+                EliminarArchivos(rutasFisicas);
                 return Content(
                     HttpStatusCode.BadRequest,
                     new ApiResponse<object>
@@ -948,6 +1035,25 @@ namespace SACIRI_backend.Controllers
                         Message = exception.Message,
                         Data = null
                     });
+            }
+            catch (InvalidOperationException exception)
+            {
+                EliminarArchivos(archivosTemporales);
+                EliminarArchivos(rutasFisicas);
+                return Content(
+                    HttpStatusCode.InternalServerError,
+                    new ApiResponse<object>
+                    {
+                        Status = (int)HttpStatusCode.InternalServerError,
+                        Message = exception.Message,
+                        Data = null
+                    });
+            }
+            catch
+            {
+                EliminarArchivos(archivosTemporales);
+                EliminarArchivos(rutasFisicas);
+                throw;
             }
         }
     }

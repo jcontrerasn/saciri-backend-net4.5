@@ -99,12 +99,16 @@ namespace SACIRI_backend.Services
 
             var flagNormalizado = (flag ?? string.Empty).Trim().ToUpperInvariant();
 
-            if (flagNormalizado != "CS"
-                && flagNormalizado != "A"
-                && flagNormalizado != "TMS")
+            if (flagNormalizado != "CREADAS"
+                && flagNormalizado != "ASIGNADAS"
+                && flagNormalizado != "MIS_SOLICITUDES"
+                && flagNormalizado != "TODAS"
+                && flagNormalizado != "PENDIENTES_ASIGNACION"
+                && flagNormalizado != "CONCLUIDAS"
+                && flagNormalizado != "ANULADAS")
             {
                 throw new ArgumentException(
-                    "El flag debe ser CS, A o TMS.", "flag");
+                    "El flag no es válido.", "flag");
             }
 
             var solicitudes = await repository.ObtenerFlagAsync(
@@ -182,7 +186,23 @@ namespace SACIRI_backend.Services
                         Comentario = comentario.Comentario,
                         Tipo = comentario.Tipo,
                         Usuario = comentario.Usuario,
-                        FechaRegistro = comentario.FechaRegistro
+                         FechaRegistro = comentario.FechaRegistro,
+                         Adjuntos = comentario.Adjuntos.Select(adjunto =>
+                             new AdjuntoSolicitudResponse
+                             {
+                                 IdAdjunto = adjunto.IdAdjunto,
+                                 IdSolicitud = adjunto.IdSolicitud,
+                                 IdHistorialSolicitud =
+                                     adjunto.IdHistorialSolicitud,
+                                 IdComentario = adjunto.IdComentario,
+                                 NombreAdjunto = adjunto.NombreAdjunto,
+                                 Formato = adjunto.Formato,
+                                 TamanoAdjunto = adjunto.TamanoAdjunto,
+                                 Ruta = adjunto.Ruta,
+                                 AdjuntadoPor = adjunto.AdjuntadoPor,
+                                 Fecha = adjunto.Fecha,
+                                 Estado = adjunto.Estado
+                             }).ToList()
                     }).ToList(),
                 Adjuntos = solicitud.Adjuntos.Select(adjunto =>
                     new AdjuntoSolicitudResponse

@@ -76,7 +76,7 @@ namespace SACIRI_backend.Services
                 NivelAprobacion = NormalizarTexto(request.NivelAprobacion),
                 RolAprobacion = NormalizarTexto(request.RolAprobacion),
                 TiempoAtencion = request.TiempoAtencion,
-                Estado = request.Estado,
+                Estado = true,
                 Atencion = request.Atencion,
                 Nivel1 = request.Nivel1,
                 Nivel2 = request.Nivel2,

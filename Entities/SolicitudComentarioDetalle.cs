@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace SACIRI_backend.Entities
 {
@@ -9,5 +10,11 @@ namespace SACIRI_backend.Entities
         public string Tipo { get; set; }
         public string Usuario { get; set; }
         public DateTime FechaRegistro { get; set; }
+        public IList<AdjuntoSolicitud> Adjuntos { get; set; }
+
+        public SolicitudComentarioDetalle()
+        {
+            Adjuntos = new List<AdjuntoSolicitud>();
+        }
     }
 }
