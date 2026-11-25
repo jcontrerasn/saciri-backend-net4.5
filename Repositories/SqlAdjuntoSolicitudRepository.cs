@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
@@ -35,7 +36,8 @@ namespace SACIRI_backend.Repositories
             string ruta,
             string adjuntadoPor,
             CancellationToken cancellationToken = default(CancellationToken),
-            bool primerHistorial = false)
+            bool primerHistorial = false,
+            int? idComentario = null)
         {
             using (var connection = new SqlConnection(connectionString))
             {
@@ -49,6 +51,7 @@ namespace SACIRI_backend.Repositories
 
                 using (var command = new SqlCommand(
                     "DECLARE @IdHistorialSolicitud INT; "
+                    + "DECLARE @IdComentario INT = @IdComentarioParametro; "
                     + "SELECT TOP (1) @IdHistorialSolicitud = "
                     + "IdHistorialSolicitud "
                     + "FROM dbo.CIRI_HistorialSolicitudes "
@@ -59,10 +62,28 @@ namespace SACIRI_backend.Repositories
                     + "SELECT CAST(NULL AS INT); "
                     + "RETURN; "
                     + "END; "
+                    + "IF @IdComentario IS NULL "
+                    + "BEGIN "
+                    + "SELECT TOP (1) @IdComentario = c.IdComentario "
+                    + "FROM dbo.CIRI_ComentariosSolicitudes AS c "
+                    + "WHERE c.IdSolicitud = @IdSolicitud "
+                    + "AND c.Tipo = 'Comentarios' "
+                    + "ORDER BY c.IdComentario ASC; "
+                    + "END; "
+                    + "IF @IdComentario IS NOT NULL "
+                    + "AND NOT EXISTS (SELECT 1 "
+                    + "FROM dbo.CIRI_ComentariosSolicitudes "
+                    + "WHERE IdComentario = @IdComentario "
+                    + "AND IdSolicitud = @IdSolicitud) "
+                    + "BEGIN "
+                    + "SELECT CAST(NULL AS INT); "
+                    + "RETURN; "
+                    + "END; "
                     + "INSERT INTO dbo.CIRI_AdjuntosSolicitudes "
-                    + "(IdHistorialSolicitud, NombreAdjunto, Formato, "
+                    + "(IdHistorialSolicitud, IdComentario, NombreAdjunto, Formato, "
                     + "TamanoAdjunto, Ruta, AdjuntadoPor) "
-                    + "VALUES (@IdHistorialSolicitud, @NombreAdjunto, @Formato, "
+                    + "VALUES (@IdHistorialSolicitud, @IdComentario, "
+                    + "@NombreAdjunto, @Formato, "
                     + "@TamanoAdjunto, @Ruta, @AdjuntadoPor); "
                     + "SELECT CAST(SCOPE_IDENTITY() AS INT);",
                     connection))
@@ -71,6 +92,11 @@ namespace SACIRI_backend.Repositories
                     command.CommandTimeout = 30;
                     command.Parameters.Add(
                         "@IdSolicitud", SqlDbType.Int).Value = idSolicitud;
+                    command.Parameters.Add(new SqlParameter(
+                        "@IdComentarioParametro", SqlDbType.Int)
+                    {
+                        Value = (object)idComentario ?? DBNull.Value
+                    });
                     command.Parameters.Add(
                         "@NombreAdjunto", SqlDbType.NVarChar, 255).Value =
                         nombreAdjunto;
@@ -109,7 +135,8 @@ namespace SACIRI_backend.Repositories
         {
             using (var command = new SqlCommand(
                 "SELECT adjunto.IdAdjunto, historial.IdSolicitud, "
-                + "adjunto.IdHistorialSolicitud, adjunto.NombreAdjunto, "
+                + "adjunto.IdHistorialSolicitud, adjunto.IdComentario, "
+                + "adjunto.NombreAdjunto, "
                 + "adjunto.Formato, adjunto.TamanoAdjunto, adjunto.Ruta, "
                 + "adjunto.AdjuntadoPor, adjunto.Fecha, adjunto.Estado "
                 + "FROM dbo.CIRI_AdjuntosSolicitudes AS adjunto "
@@ -135,6 +162,66 @@ namespace SACIRI_backend.Repositories
             }
         }
 
+        public async Task<IList<AdjuntoSolicitud>> ObtenerPorSolicitudAsync(
+            int idSolicitud,
+            CancellationToken cancellationToken = default(CancellationToken))
+        {
+            var adjuntos = new List<AdjuntoSolicitud>();
+
+            using (var connection = new SqlConnection(connectionString))
+            using (var command = new SqlCommand(
+                "SELECT adjunto.IdAdjunto, historial.IdSolicitud, "
+                + "adjunto.IdHistorialSolicitud, adjunto.IdComentario, "
+                + "adjunto.NombreAdjunto, adjunto.Formato, "
+                + "adjunto.TamanoAdjunto, adjunto.Ruta, "
+                + "adjunto.AdjuntadoPor, adjunto.Fecha, adjunto.Estado "
+                + "FROM dbo.CIRI_AdjuntosSolicitudes AS adjunto "
+                + "INNER JOIN dbo.CIRI_HistorialSolicitudes AS historial "
+                + "ON historial.IdHistorialSolicitud = "
+                + "adjunto.IdHistorialSolicitud "
+                + "WHERE historial.IdSolicitud = @IdSolicitud "
+                + "AND adjunto.Estado = 1 "
+                + "ORDER BY adjunto.Fecha ASC, adjunto.IdAdjunto ASC",
+                connection))
+            {
+                command.CommandType = CommandType.Text;
+                command.CommandTimeout = 30;
+                command.Parameters.Add(
+                    "@IdSolicitud", SqlDbType.Int).Value = idSolicitud;
+
+                await connection.OpenAsync(cancellationToken)
+                    .ConfigureAwait(false);
+
+                using (var reader = await command.ExecuteReaderAsync(
+                    cancellationToken).ConfigureAwait(false))
+                {
+                    while (await reader.ReadAsync(cancellationToken)
+                        .ConfigureAwait(false))
+                    {
+                        adjuntos.Add(LeerAdjunto(reader));
+                    }
+                }
+            }
+
+            return adjuntos;
+        }
+
+        public async Task<AdjuntoSolicitud> ObtenerPorIdAsync(
+            int idAdjunto,
+            CancellationToken cancellationToken = default(CancellationToken))
+        {
+            using (var connection = new SqlConnection(connectionString))
+            {
+                await connection.OpenAsync(cancellationToken)
+                    .ConfigureAwait(false);
+
+                return await ObtenerPorIdAsync(
+                    connection,
+                    idAdjunto,
+                    cancellationToken).ConfigureAwait(false);
+            }
+        }
+
         private static AdjuntoSolicitud LeerAdjunto(
             SqlDataReader reader)
         {
@@ -144,6 +231,9 @@ namespace SACIRI_backend.Repositories
                 IdSolicitud = Convert.ToInt32(reader["IdSolicitud"]),
                 IdHistorialSolicitud = Convert.ToInt32(
                     reader["IdHistorialSolicitud"]),
+                IdComentario = reader["IdComentario"] == DBNull.Value
+                    ? (int?)null
+                    : Convert.ToInt32(reader["IdComentario"]),
                 NombreAdjunto = Convert.ToString(reader["NombreAdjunto"]),
                 Formato = Convert.ToString(reader["Formato"]),
                 TamanoAdjunto = Convert.ToInt64(reader["TamanoAdjunto"]),

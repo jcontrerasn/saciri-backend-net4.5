@@ -184,6 +184,22 @@ namespace SACIRI_backend.Services
                         Usuario = comentario.Usuario,
                         FechaRegistro = comentario.FechaRegistro
                     }).ToList(),
+                Adjuntos = solicitud.Adjuntos.Select(adjunto =>
+                    new AdjuntoSolicitudResponse
+                    {
+                        IdAdjunto = adjunto.IdAdjunto,
+                        IdSolicitud = adjunto.IdSolicitud,
+                        IdHistorialSolicitud = adjunto.IdHistorialSolicitud,
+                        IdComentario = adjunto.IdComentario,
+                        NombreAdjunto = adjunto.NombreAdjunto,
+                        Formato = adjunto.Formato,
+                        TamanoAdjunto = adjunto.TamanoAdjunto,
+                        Ruta = adjunto.Ruta,
+                        AdjuntadoPor = adjunto.AdjuntadoPor,
+                        Fecha = adjunto.Fecha,
+                        Estado = adjunto.Estado
+                    }).ToList(),
+                RutasAdjuntos = solicitud.RutasAdjuntos.ToList(),
                 CentroCosto = solicitud.CentroCosto,
                 NombreCentroCosto = solicitud.NombreCentroCosto,
                 Lugar = solicitud.Lugar

@@ -87,11 +87,34 @@ namespace SACIRI_backend.Repositories
                             "No se encontrÃ³ el IdSolicitud registrado.");
                     }
 
-                    return new RegistrarSolicitudResponse
+                    using (var comentarioCommand = new SqlCommand(
+                        "SELECT TOP (1) IdComentario "
+                        + "FROM dbo.CIRI_ComentariosSolicitudes "
+                        + "WHERE IdSolicitud = @IdSolicitud "
+                        + "AND Tipo = 'Comentarios' "
+                        + "ORDER BY IdComentario ASC",
+                        connection))
                     {
-                        IdSolicitud = Convert.ToInt32(idResult),
-                        CodigoSolicitud = codigoSolicitud
-                    };
+                        comentarioCommand.CommandType = CommandType.Text;
+                        comentarioCommand.CommandTimeout = 30;
+                        comentarioCommand.Parameters.Add(
+                            "@IdSolicitud", SqlDbType.Int).Value =
+                            Convert.ToInt32(idResult);
+
+                        var comentarioResult =
+                            await comentarioCommand.ExecuteScalarAsync(
+                                cancellationToken).ConfigureAwait(false);
+
+                        return new RegistrarSolicitudResponse
+                        {
+                            IdSolicitud = Convert.ToInt32(idResult),
+                            IdComentario = comentarioResult == null
+                                || comentarioResult == DBNull.Value
+                                ? (int?)null
+                                : Convert.ToInt32(comentarioResult),
+                            CodigoSolicitud = codigoSolicitud
+                        };
+                    }
                 }
             }
         }
@@ -169,6 +192,8 @@ namespace SACIRI_backend.Repositories
                 await connection.OpenAsync(cancellationToken)
                     .ConfigureAwait(false);
 
+                SolicitudEnProcesoResponse response;
+
                 using (var reader = await command.ExecuteReaderAsync(
                     cancellationToken).ConfigureAwait(false))
                 {
@@ -179,11 +204,12 @@ namespace SACIRI_backend.Repositories
                             "El procedimiento no devolvió una respuesta.");
                     }
 
-                    return new SolicitudEnProcesoResponse
+                    response = new SolicitudEnProcesoResponse
                     {
                         Success = Convert.ToBoolean(reader["Success"]),
                         Mensaje = Convert.ToString(reader["Mensaje"])
                     };
+                    return response;
                 }
             }
         }
@@ -194,6 +220,8 @@ namespace SACIRI_backend.Repositories
             string usuario,
             CancellationToken cancellationToken = default(CancellationToken))
         {
+            SolicitudEnProcesoResponse response;
+
             using (var connection = new SqlConnection(connectionString))
             using (var command = new SqlCommand(
                 "pr_ciri_SolicitarInformacion", connection))
@@ -223,12 +251,46 @@ namespace SACIRI_backend.Repositories
                             "El procedimiento no devolvió una respuesta.");
                     }
 
-                    return new SolicitudEnProcesoResponse
+                    response = new SolicitudEnProcesoResponse
                     {
                         Success = Convert.ToBoolean(reader["Success"]),
                         Mensaje = Convert.ToString(reader["Mensaje"])
                     };
                 }
+
+                using (var comentarioCommand = new SqlCommand(
+                    "SELECT TOP (1) IdComentario "
+                    + "FROM dbo.CIRI_ComentariosSolicitudes "
+                    + "WHERE IdSolicitud = @IdSolicitud "
+                    + "AND Comentario = @Comentario "
+                    + "AND Usuario = @Usuario "
+                    + "AND Tipo = 'Comentarios' "
+                    + "ORDER BY IdComentario DESC",
+                    connection))
+                {
+                    comentarioCommand.CommandType = CommandType.Text;
+                    comentarioCommand.CommandTimeout = 30;
+                    comentarioCommand.Parameters.Add(
+                        "@IdSolicitud", SqlDbType.Int).Value = idSolicitud;
+                    comentarioCommand.Parameters.Add(new SqlParameter(
+                        "@Comentario", SqlDbType.NVarChar, -1)
+                    {
+                        Value = comentario
+                    });
+                    comentarioCommand.Parameters.Add(
+                        "@Usuario", SqlDbType.VarChar, 100).Value = usuario;
+
+                    var comentarioResult =
+                        await comentarioCommand.ExecuteScalarAsync(
+                            cancellationToken).ConfigureAwait(false);
+
+                    response.IdComentario = comentarioResult == null
+                        || comentarioResult == DBNull.Value
+                        ? (int?)null
+                        : Convert.ToInt32(comentarioResult);
+                }
+
+                return response;
             }
         }
 

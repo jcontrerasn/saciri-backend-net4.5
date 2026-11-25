@@ -180,7 +180,8 @@ namespace SACIRI_backend.Controllers
                         ruta,
                         adjuntadoPor,
                         cancellationToken,
-                        true).ConfigureAwait(false);
+                        true,
+                        response.IdComentario).ConfigureAwait(false);
 
                     if (adjunto == null)
                     {
@@ -258,6 +259,59 @@ namespace SACIRI_backend.Controllers
             public string NombreAdjunto { get; set; }
             public string Formato { get; set; }
             public long TamanoAdjunto { get; set; }
+        }
+
+        private static List<ArchivoAdjuntoTemporal> PrepararArchivos(
+            MultipartFormDataStreamProvider provider,
+            IList<string> archivosTemporales)
+        {
+            var archivos = provider.FileData.ToList();
+            if (archivos.Count == 0)
+            {
+                throw new ArgumentException(
+                    "Debe enviar al menos un archivo en el campo 'archivo'.");
+            }
+
+            foreach (var archivo in archivos)
+            {
+                archivosTemporales.Add(archivo.LocalFileName);
+            }
+
+            var preparados = new List<ArchivoAdjuntoTemporal>();
+            foreach (var archivo in archivos)
+            {
+                var contentDisposition = archivo.Headers.ContentDisposition;
+                var nombreOriginal = contentDisposition == null
+                    ? null
+                    : contentDisposition.FileName;
+                var nombreAdjunto = string.IsNullOrWhiteSpace(nombreOriginal)
+                    ? null
+                    : Path.GetFileName(nombreOriginal.Trim('"'));
+
+                if (string.IsNullOrWhiteSpace(nombreAdjunto))
+                {
+                    throw new ArgumentException(
+                        "Cada archivo debe tener un nombre válido.");
+                }
+
+                var extension = Path.GetExtension(nombreAdjunto);
+                var formato = string.IsNullOrWhiteSpace(extension)
+                    ? archivo.Headers.ContentType == null
+                        ? null
+                        : archivo.Headers.ContentType.MediaType
+                    : extension.TrimStart('.');
+
+                preparados.Add(new ArchivoAdjuntoTemporal
+                {
+                    Archivo = archivo,
+                    NombreAdjunto = nombreAdjunto,
+                    Formato = formato,
+                    TamanoAdjunto = new FileInfo(
+                        archivo.LocalFileName).Length
+                });
+            }
+
+            return preparados;
         }
 
         private static string ObtenerCampo(
@@ -473,14 +527,108 @@ namespace SACIRI_backend.Controllers
         [HttpPost]
         [Route("solicitar-informacion")]
         public async Task<IHttpActionResult> SolicitarInformacion(
-            [FromBody] SolicitarInformacionRequest request,
             CancellationToken cancellationToken)
         {
+            if (Request.Content == null
+                || !Request.Content.IsMimeMultipartContent())
+            {
+                return Content(
+                    HttpStatusCode.UnsupportedMediaType,
+                    new ApiResponse<object>
+                    {
+                        Status = (int)HttpStatusCode.UnsupportedMediaType,
+                        Message = "La solicitud debe ser multipart/form-data.",
+                        Data = null
+                    });
+            }
+
+            var rootDirectory = AppDomain.CurrentDomain.BaseDirectory;
+            var tempDirectory = Path.Combine(
+                rootDirectory,
+                "App_Data",
+                "uploads-temp");
+            Directory.CreateDirectory(tempDirectory);
+
+            var provider = new MultipartFormDataStreamProvider(tempDirectory);
+            var archivosTemporales = new List<string>();
+            var rutasFisicas = new List<string>();
+
             try
             {
+                await Request.Content.ReadAsMultipartAsync(
+                    provider,
+                    cancellationToken).ConfigureAwait(false);
+
+                var archivosPreparados = PrepararArchivos(
+                    provider,
+                    archivosTemporales);
+                var request = new SolicitarInformacionRequest
+                {
+                    IdSolicitud = ObtenerEntero(provider, "idSolicitud"),
+                    Comentario = ObtenerCampo(provider, "comentario"),
+                    Usuario = ObtenerCampo(provider, "usuario")
+                };
+
+                foreach (var archivoPreparado in archivosPreparados)
+                {
+                    ValidarDatosAdjunto(
+                        archivoPreparado.NombreAdjunto,
+                        archivoPreparado.Formato,
+                        archivoPreparado.TamanoAdjunto,
+                        request.Usuario);
+                }
+
                 var response = await solicitudService.SolicitarInformacionAsync(
                     request,
-                    cancellationToken);
+                    cancellationToken).ConfigureAwait(false);
+
+                if (response == null || !response.IdComentario.HasValue)
+                {
+                    throw new InvalidOperationException(
+                        "No se pudo obtener el comentario registrado.");
+                }
+
+                var directorioSolicitud = Path.Combine(
+                    rootDirectory,
+                    "uploads",
+                    "solicitudes",
+                    request.IdSolicitud.ToString());
+                Directory.CreateDirectory(directorioSolicitud);
+
+                foreach (var archivoPreparado in archivosPreparados)
+                {
+                    var nombreSeguro = SanitizarNombre(
+                        archivoPreparado.NombreAdjunto);
+                    var nombreGuardado = Guid.NewGuid().ToString("N")
+                        + "_" + nombreSeguro;
+                    var rutaFisica = Path.Combine(
+                        directorioSolicitud,
+                        nombreGuardado);
+
+                    File.Move(
+                        archivoPreparado.Archivo.LocalFileName,
+                        rutaFisica);
+                    rutasFisicas.Add(rutaFisica);
+
+                    var ruta = "uploads/solicitudes/"
+                        + request.IdSolicitud + "/" + nombreGuardado;
+                    var adjunto = await adjuntoSolicitudService.CrearAsync(
+                        request.IdSolicitud,
+                        archivoPreparado.NombreAdjunto,
+                        archivoPreparado.Formato,
+                        archivoPreparado.TamanoAdjunto,
+                        ruta,
+                        request.Usuario,
+                        cancellationToken,
+                        false,
+                        response.IdComentario).ConfigureAwait(false);
+
+                    if (adjunto == null)
+                    {
+                        throw new InvalidOperationException(
+                            "No se pudo registrar el archivo adjunto.");
+                    }
+                }
 
                 return Ok(new ApiResponse<SolicitudEnProcesoResponse>
                 {
@@ -491,6 +639,8 @@ namespace SACIRI_backend.Controllers
             }
             catch (ArgumentException exception)
             {
+                EliminarArchivos(archivosTemporales);
+                EliminarArchivos(rutasFisicas);
                 return Content(
                     HttpStatusCode.BadRequest,
                     new ApiResponse<object>
@@ -499,6 +649,25 @@ namespace SACIRI_backend.Controllers
                         Message = exception.Message,
                         Data = null
                     });
+            }
+            catch (InvalidOperationException exception)
+            {
+                EliminarArchivos(archivosTemporales);
+                EliminarArchivos(rutasFisicas);
+                return Content(
+                    HttpStatusCode.InternalServerError,
+                    new ApiResponse<object>
+                    {
+                        Status = (int)HttpStatusCode.InternalServerError,
+                        Message = exception.Message,
+                        Data = null
+                    });
+            }
+            catch
+            {
+                EliminarArchivos(archivosTemporales);
+                EliminarArchivos(rutasFisicas);
+                throw;
             }
         }
 

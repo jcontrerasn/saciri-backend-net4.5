@@ -107,6 +107,45 @@ namespace SACIRI_backend.Repositories
                         }
                     }
 
+                    if (await reader.NextResultAsync(cancellationToken)
+                        .ConfigureAwait(false))
+                    {
+                        while (await reader.ReadAsync(cancellationToken)
+                            .ConfigureAwait(false))
+                        {
+                            var adjunto = new AdjuntoSolicitud
+                            {
+                                IdAdjunto = Convert.ToInt32(
+                                    reader["IdAdjunto"]),
+                                IdSolicitud = Convert.ToInt32(
+                                    reader["IdSolicitud"]),
+                                IdHistorialSolicitud = Convert.ToInt32(
+                                    reader["IdHistorialSolicitud"]),
+                                IdComentario = reader["IdComentario"]
+                                    == DBNull.Value
+                                    ? (int?)null
+                                    : Convert.ToInt32(
+                                        reader["IdComentario"]),
+                                NombreAdjunto = LeerTexto(
+                                    reader, "NombreAdjunto"),
+                                Formato = LeerTexto(reader, "Formato"),
+                                TamanoAdjunto = Convert.ToInt64(
+                                    reader["TamanoAdjunto"]),
+                                Ruta = LeerTexto(reader, "Ruta"),
+                                AdjuntadoPor = LeerTexto(
+                                    reader, "AdjuntadoPor"),
+                                Fecha = Convert.ToDateTime(reader["Fecha"]),
+                                Estado = Convert.ToBoolean(reader["Estado"])
+                            };
+
+                            solicitud.Adjuntos.Add(adjunto);
+                            if (!string.IsNullOrWhiteSpace(adjunto.Ruta))
+                            {
+                                solicitud.RutasAdjuntos.Add(adjunto.Ruta);
+                            }
+                        }
+                    }
+
                     return solicitud;
                 }
             }

@@ -26,6 +26,8 @@ namespace SACIRI_backend.Dtos
         public DateTime? FechaInicioAtencion { get; set; }
         public DateTime? FechaCaducidad { get; set; }
         public List<SolicitudComentarioResponse> Comentarios { get; set; }
+        public List<AdjuntoSolicitudResponse> Adjuntos { get; set; }
+        public List<string> RutasAdjuntos { get; set; }
         public string CentroCosto { get; set; }
         public string NombreCentroCosto { get; set; }
         public string Lugar { get; set; }
@@ -34,6 +36,8 @@ namespace SACIRI_backend.Dtos
         {
             CodigoSolicitud = string.Empty;
             Comentarios = new List<SolicitudComentarioResponse>();
+            Adjuntos = new List<AdjuntoSolicitudResponse>();
+            RutasAdjuntos = new List<string>();
         }
     }
 }

@@ -1,10 +1,13 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Web;
 using System.Web.Http;
 using System.Net.Http.Formatting;
 using SACIRI_backend.Dtos;
@@ -31,6 +34,109 @@ namespace SACIRI_backend.Controllers
             }
 
             this.adjuntoSolicitudService = adjuntoSolicitudService;
+        }
+
+        // GET /api/solicitudes/{idSolicitud}/adjuntos
+        [HttpGet]
+        [Route("{idSolicitud:int}/adjuntos")]
+        public async Task<IHttpActionResult> ObtenerPorSolicitud(
+            int idSolicitud,
+            CancellationToken cancellationToken)
+        {
+            try
+            {
+                var adjuntos = await adjuntoSolicitudService
+                    .ObtenerPorSolicitudAsync(
+                        idSolicitud,
+                        cancellationToken).ConfigureAwait(false);
+
+                return Ok(new ApiResponse<IList<AdjuntoSolicitudResponse>>
+                {
+                    Status = (int)HttpStatusCode.OK,
+                    Message = "Adjuntos obtenidos correctamente.",
+                    Data = adjuntos
+                });
+            }
+            catch (ArgumentException exception)
+            {
+                return Content(
+                    HttpStatusCode.BadRequest,
+                    new ApiResponse<object>
+                    {
+                        Status = (int)HttpStatusCode.BadRequest,
+                        Message = exception.Message,
+                        Data = null
+                    });
+            }
+        }
+
+        // GET /api/solicitudes/adjuntos/{idAdjunto}/archivo
+        [HttpGet]
+        [Route("adjuntos/{idAdjunto:int}/archivo")]
+        public async Task<IHttpActionResult> VerArchivo(
+            int idAdjunto,
+            CancellationToken cancellationToken)
+        {
+            try
+            {
+                var adjunto = await adjuntoSolicitudService.ObtenerPorIdAsync(
+                    idAdjunto,
+                    cancellationToken).ConfigureAwait(false);
+
+                if (adjunto == null || !adjunto.Estado)
+                {
+                    return NotFound();
+                }
+
+                var rootDirectory = AppDomain.CurrentDomain.BaseDirectory;
+                var uploadsDirectory = Path.GetFullPath(Path.Combine(
+                    rootDirectory,
+                    "uploads"));
+                var rutaFisica = Path.GetFullPath(Path.Combine(
+                    rootDirectory,
+                    (adjunto.Ruta ?? string.Empty)
+                        .Replace('/', Path.DirectorySeparatorChar)));
+                var prefijoUploads = uploadsDirectory
+                    + Path.DirectorySeparatorChar;
+
+                if (!rutaFisica.StartsWith(
+                    prefijoUploads,
+                    StringComparison.OrdinalIgnoreCase))
+                {
+                    return BadRequest(
+                        "La ruta del archivo no es válida.");
+                }
+
+                if (!File.Exists(rutaFisica))
+                {
+                    return NotFound();
+                }
+
+                var response = Request.CreateResponse(HttpStatusCode.OK);
+                response.Content = new StreamContent(
+                    File.OpenRead(rutaFisica));
+                response.Content.Headers.ContentType =
+                    new MediaTypeHeaderValue(
+                        MimeMapping.GetMimeMapping(adjunto.NombreAdjunto));
+                response.Content.Headers.ContentDisposition =
+                    new ContentDispositionHeaderValue("inline")
+                    {
+                        FileName = adjunto.NombreAdjunto
+                    };
+
+                return ResponseMessage(response);
+            }
+            catch (ArgumentException exception)
+            {
+                return Content(
+                    HttpStatusCode.BadRequest,
+                    new ApiResponse<object>
+                    {
+                        Status = (int)HttpStatusCode.BadRequest,
+                        Message = exception.Message,
+                        Data = null
+                    });
+            }
         }
 
         // POST /api/solicitudes/{idSolicitud}/adjuntos
@@ -102,6 +208,8 @@ namespace SACIRI_backend.Controllers
 
                 var adjuntadoPor = provider.FormData["adjuntadoPor"]
                     ?? provider.FormData["AdjuntadoPor"];
+                var idComentario = ObtenerEnteroNullable(
+                    provider.FormData["idComentario"]);
                 var extension = Path.GetExtension(nombreAdjunto);
                 var formato = string.IsNullOrWhiteSpace(extension)
                     ? archivo.Headers.ContentType == null
@@ -133,7 +241,9 @@ namespace SACIRI_backend.Controllers
                     tamanoAdjunto,
                     ruta,
                     adjuntadoPor,
-                    cancellationToken).ConfigureAwait(false);
+                    cancellationToken,
+                    false,
+                    idComentario).ConfigureAwait(false);
 
                 if (adjunto == null)
                 {
@@ -191,6 +301,14 @@ namespace SACIRI_backend.Controllers
             {
                 File.Delete(ruta);
             }
+        }
+
+        private static int? ObtenerEnteroNullable(string valor)
+        {
+            int resultado;
+            return int.TryParse(valor, out resultado)
+                ? (int?)resultado
+                : null;
         }
     }
 }

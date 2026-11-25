@@ -26,6 +26,8 @@ namespace SACIRI_backend.Entities
         public DateTime? FechaInicioAtencion { get; set; }
         public DateTime? FechaCaducidad { get; set; }
         public IList<SolicitudComentarioDetalle> Comentarios { get; set; }
+        public IList<AdjuntoSolicitud> Adjuntos { get; set; }
+        public IList<string> RutasAdjuntos { get; set; }
         public string CentroCosto { get; set; }
         public string NombreCentroCosto { get; set; }
         public string Lugar { get; set; }
@@ -33,6 +35,8 @@ namespace SACIRI_backend.Entities
         public SolicitudPorCodigo()
         {
             Comentarios = new List<SolicitudComentarioDetalle>();
+            Adjuntos = new List<AdjuntoSolicitud>();
+            RutasAdjuntos = new List<string>();
         }
     }
 }

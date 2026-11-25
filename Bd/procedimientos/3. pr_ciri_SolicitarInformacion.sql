@@ -1,0 +1,158 @@
+USE [SM_PRUEBA]
+GO
+/****** Object:  StoredProcedure [dbo].[pr_ciri_SolicitarInformacion]    Script Date: 24/11/2026 18:50:20 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+ALTER PROCEDURE [dbo].[pr_ciri_SolicitarInformacion]
+    @IdSolicitud INT,
+    @Comentario NVARCHAR(MAX),
+    @Usuario VARCHAR(100)
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SET XACT_ABORT ON;
+
+    DECLARE @IdEstadoAnterior INT;
+    DECLARE @IdComentario INT;
+
+    BEGIN TRY
+        BEGIN TRANSACTION;
+
+        -- 1. Validar parámetros
+        IF NULLIF(LTRIM(RTRIM(@Comentario)), N'') IS NULL
+        BEGIN
+            ;THROW 50001,
+                'El comentario para solicitar información es obligatorio.', 1;
+        END;
+
+        IF NULLIF(LTRIM(RTRIM(@Usuario)), '') IS NULL
+        BEGIN
+            ;THROW 50002, 'El usuario es obligatorio.', 1;
+        END;
+
+        -- 2. Obtener el estado anterior y bloquear la solicitud
+        SELECT
+            @IdEstadoAnterior = IdEstadoSolicitud
+        FROM dbo.CIRI_Solicitudes WITH (UPDLOCK, HOLDLOCK)
+        WHERE IdSolicitud = @IdSolicitud;
+
+        IF @IdEstadoAnterior IS NULL
+        BEGIN
+            ;THROW 50003, 'La solicitud no existe.', 1;
+        END;
+
+        -- 3. No permitir solicitar información en estados finales
+        IF @IdEstadoAnterior IN (5, 6)
+        BEGIN
+            ;THROW 50004,
+                'No se puede solicitar información de una solicitud finalizada o anulada.',
+                1;
+        END;
+
+        -- 4. Cambiar estado a 4 (Información solicitada)
+        UPDATE dbo.CIRI_Solicitudes
+        SET IdEstadoSolicitud = 4
+        WHERE IdSolicitud = @IdSolicitud;
+
+        -- 5. Registrar comentario
+        INSERT INTO dbo.CIRI_ComentariosSolicitudes (
+            IdSolicitud,
+            Comentario,
+            Tipo,
+            Usuario
+        )
+        VALUES (
+            @IdSolicitud,
+            @Comentario,
+            'Comentarios',
+            @Usuario
+        );
+
+        SET @IdComentario = CONVERT(INT, SCOPE_IDENTITY());
+
+        -- 6. Registrar fotografía completa en el historial
+        INSERT INTO dbo.CIRI_HistorialSolicitudes (
+            IdSolicitud,
+            SolicitadoPara,
+            CreadoPor,
+            CodigoSolicitud,
+            IdEstadoSolicitud,
+            FechaSolicitud,
+            IdTipoRegistro,
+            IdCategoria,
+            IdSubcategoria,
+            IdOcurrencia,
+            Prioridad,
+            AsignadoA,
+            FechaInicio,
+            FechaCaducidad,
+            FechaFinAtencion,
+            DuracionAtencion,
+            CopiaJefatura,
+            JefeAprobador,
+            EstadoAprobacion,
+            UsuarioAprobacion,
+            FechaAprobacion,
+            Nivel,
+            ProblemaMasivo,
+            CCSolicitadoPara,
+            Accion,
+            UsuarioModificacion,
+            Observacion,
+            IdEstadoAnterior,
+            IdEstadoNuevo
+        )
+        SELECT
+            s.IdSolicitud,
+            s.SolicitadoPara,
+            s.CreadoPor,
+            s.CodigoSolicitud,
+            s.IdEstadoSolicitud,
+            s.FechaSolicitud,
+            s.IdTipoRegistro,
+            s.IdCategoria,
+            s.IdSubcategoria,
+            s.IdOcurrencia,
+            s.Prioridad,
+            s.AsignadoA,
+            s.FechaInicio,
+            s.FechaCaducidad,
+            s.FechaFinAtencion,
+            s.DuracionAtencion,
+            s.CopiaJefatura,
+            s.JefeAprobador,
+            s.EstadoAprobacion,
+            s.UsuarioAprobacion,
+            s.FechaAprobacion,
+            s.Nivel,
+            s.ProblemaMasivo,
+            s.CCSolicitadoPara,
+
+            'SolicitudInformacion',  
+            @Usuario,                
+            @Comentario,             
+            @IdEstadoAnterior,       
+            s.IdEstadoSolicitud      
+
+        FROM dbo.CIRI_Solicitudes s
+        WHERE s.IdSolicitud = @IdSolicitud;
+
+        -- 7. Confirmar todos los cambios
+        COMMIT TRANSACTION;
+
+        -- 8. Respuesta
+        SELECT
+            CAST(1 AS BIT) AS Success,
+            'Se solicitó información correctamente' AS Mensaje,
+            @IdComentario AS IdComentario;
+
+    END TRY
+    BEGIN CATCH
+        IF XACT_STATE() <> 0
+            ROLLBACK TRANSACTION;
+
+        THROW;
+    END CATCH
+END;

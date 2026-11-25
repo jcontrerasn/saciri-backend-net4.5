@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using SACIRI_backend.Dtos;
@@ -29,7 +31,8 @@ namespace SACIRI_backend.Services
             string ruta,
             string adjuntadoPor,
             CancellationToken cancellationToken = default(CancellationToken),
-            bool primerHistorial = false)
+            bool primerHistorial = false,
+            int? idComentario = null)
         {
             if (idSolicitud <= 0)
             {
@@ -85,7 +88,44 @@ namespace SACIRI_backend.Services
                 ruta.Trim(),
                 adjuntadoPor.Trim(),
                 cancellationToken,
-                primerHistorial).ConfigureAwait(false);
+                primerHistorial,
+                idComentario).ConfigureAwait(false);
+
+            return registro == null ? null : MapearRespuesta(registro);
+        }
+
+        public async Task<IList<AdjuntoSolicitudResponse>> ObtenerPorSolicitudAsync(
+            int idSolicitud,
+            CancellationToken cancellationToken = default(CancellationToken))
+        {
+            if (idSolicitud <= 0)
+            {
+                throw new ArgumentException(
+                    "El idSolicitud debe ser mayor que cero.",
+                    "idSolicitud");
+            }
+
+            var registros = await repository.ObtenerPorSolicitudAsync(
+                idSolicitud,
+                cancellationToken).ConfigureAwait(false);
+
+            return registros.Select(MapearRespuesta).ToList();
+        }
+
+        public async Task<AdjuntoSolicitudResponse> ObtenerPorIdAsync(
+            int idAdjunto,
+            CancellationToken cancellationToken = default(CancellationToken))
+        {
+            if (idAdjunto <= 0)
+            {
+                throw new ArgumentException(
+                    "El idAdjunto debe ser mayor que cero.",
+                    "idAdjunto");
+            }
+
+            var registro = await repository.ObtenerPorIdAsync(
+                idAdjunto,
+                cancellationToken).ConfigureAwait(false);
 
             return registro == null ? null : MapearRespuesta(registro);
         }
@@ -98,6 +138,7 @@ namespace SACIRI_backend.Services
                 IdAdjunto = registro.IdAdjunto,
                 IdSolicitud = registro.IdSolicitud,
                 IdHistorialSolicitud = registro.IdHistorialSolicitud,
+                IdComentario = registro.IdComentario,
                 NombreAdjunto = registro.NombreAdjunto,
                 Formato = registro.Formato,
                 TamanoAdjunto = registro.TamanoAdjunto,
