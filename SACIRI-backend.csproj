@@ -168,6 +168,7 @@
     <Compile Include="Dtos\OcurrenciaResponse.cs" />
     <Compile Include="Dtos\SolicitudFlagRequest.cs" />
     <Compile Include="Dtos\SolicitudFlagResponse.cs" />
+    <Compile Include="Dtos\SolicitudInicioResponse.cs" />
     <Compile Include="Dtos\SolicitudComentarioResponse.cs" />
     <Compile Include="Dtos\SolicitudPorCodigoResponse.cs" />
     <Compile Include="Dtos\SolicitudEnProcesoRequest.cs" />
@@ -224,6 +225,7 @@
     <Compile Include="Entities\AdjuntoSolicitud.cs" />
     <Compile Include="Entities\Ocurrencia.cs" />
     <Compile Include="Entities\SolicitudFlag.cs" />
+    <Compile Include="Entities\SolicitudInicio.cs" />
     <Compile Include="Entities\SolicitudComentarioDetalle.cs" />
     <Compile Include="Entities\SolicitudPorCodigo.cs" />
     <Compile Include="Entities\Rol.cs" />

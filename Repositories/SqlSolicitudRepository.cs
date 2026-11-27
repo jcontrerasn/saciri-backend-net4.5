@@ -147,29 +147,103 @@ namespace SACIRI_backend.Repositories
                     while (await reader.ReadAsync(cancellationToken)
                         .ConfigureAwait(false))
                     {
-                        solicitudes.Add(new SolicitudFlag
-                        {
-                            CodigoSolicitud = LeerTexto(
-                                reader, "CodigoSolicitud"),
-                            TipoRegistro = LeerTexto(reader, "TipoRegistro"),
-                            Categoria = LeerTexto(reader, "Categoria"),
-                            CreadoPor = LeerTexto(reader, "CreadoPor"),
-                            SolicitadoPara = LeerTexto(
-                                reader, "SolicitadoPara"),
-                            AsignadoA = LeerTexto(reader, "AsignadoA"),
-                            FechaSolicitud = Convert.ToDateTime(
-                                reader["FechaSolicitud"]),
-                            FechaEstimada = LeerFechaNullable(
-                                reader, "FechaEstimada"),
-                            CopiaJefatura = LeerTexto(
-                                reader, "CopiaJefatura"),
-                            Estado = LeerTexto(reader, "Estado")
-                        });
+                        solicitudes.Add(LeerSolicitudFlag(reader));
                     }
                 }
             }
 
             return solicitudes;
+        }
+
+        public async Task<SolicitudInicio> ObtenerInicioAsync(
+            string usuario,
+            CancellationToken cancellationToken = default(CancellationToken))
+        {
+            var inicio = new SolicitudInicio
+            {
+                PendientesEnvioInformacion = new List<SolicitudFlag>(),
+                PendientesAprobacion = new List<SolicitudFlag>(),
+                Asignadas = new List<SolicitudFlag>()
+            };
+
+            using (var connection = new SqlConnection(connectionString))
+            using (var command = new SqlCommand(
+                "pr_ciri_ListarSolicitudesXFiltro", connection))
+            {
+                command.CommandType = CommandType.StoredProcedure;
+                command.CommandTimeout = 30;
+                command.Parameters.Add(
+                    "@Pusuario_c", SqlDbType.VarChar, 100).Value = usuario;
+                command.Parameters.Add(
+                    "@Pflag_c", SqlDbType.VarChar, 30).Value = "INICIO";
+
+                await connection.OpenAsync(cancellationToken)
+                    .ConfigureAwait(false);
+
+                using (var reader = await command.ExecuteReaderAsync(
+                    cancellationToken).ConfigureAwait(false))
+                {
+                    await LeerSolicitudesAsync(
+                        reader,
+                        inicio.PendientesEnvioInformacion,
+                        cancellationToken).ConfigureAwait(false);
+
+                    if (await reader.NextResultAsync(cancellationToken)
+                        .ConfigureAwait(false))
+                    {
+                        await LeerSolicitudesAsync(
+                            reader,
+                            inicio.PendientesAprobacion,
+                            cancellationToken).ConfigureAwait(false);
+                    }
+
+                    if (await reader.NextResultAsync(cancellationToken)
+                        .ConfigureAwait(false))
+                    {
+                        await LeerSolicitudesAsync(
+                            reader,
+                            inicio.Asignadas,
+                            cancellationToken).ConfigureAwait(false);
+                    }
+                }
+            }
+
+            return inicio;
+        }
+
+        private static async Task LeerSolicitudesAsync(
+            SqlDataReader reader,
+            IList<SolicitudFlag> solicitudes,
+            CancellationToken cancellationToken)
+        {
+            while (await reader.ReadAsync(cancellationToken)
+                .ConfigureAwait(false))
+            {
+                solicitudes.Add(LeerSolicitudFlag(reader));
+            }
+        }
+
+        private static SolicitudFlag LeerSolicitudFlag(
+            SqlDataReader reader)
+        {
+            return new SolicitudFlag
+            {
+                CodigoSolicitud = LeerTexto(reader, "CodigoSolicitud"),
+                TipoRegistro = LeerTexto(reader, "TipoRegistro"),
+                Categoria = LeerTexto(reader, "Categoria"),
+                Subcategoria = LeerTexto(reader, "Subcategoria"),
+                Ocurrencia = LeerTexto(reader, "Ocurrencia"),
+                CreadoPor = LeerTexto(reader, "CreadoPor"),
+                SolicitadoPara = LeerTexto(reader, "SolicitadoPara"),
+                AsignadoA = LeerTexto(reader, "AsignadoA"),
+                FechaSolicitud = Convert.ToDateTime(
+                    reader["FechaSolicitud"]),
+                FechaEstimada = LeerFechaNullable(
+                    reader, "FechaEstimada"),
+                JefeAprobador = LeerTexto(reader, "JefeAprobador"),
+                CopiaJefatura = LeerTexto(reader, "CopiaJefatura"),
+                Estado = LeerTexto(reader, "Estado")
+            };
         }
 
         public async Task<SolicitudEnProcesoResponse> PasarAEnProcesoAsync(

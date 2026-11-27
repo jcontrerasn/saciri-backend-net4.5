@@ -37,15 +37,15 @@ namespace SACIRI_backend.Repositories
             using (var connection = new SqlConnection(connectionString))
             using (var command = new SqlCommand(
                 "SELECT IdHistorialSolicitud, IdSolicitud, SolicitadoPara, "
-                + "CreadoPor, CodigoSolicitud, IdEstadoSolicitud, "
-                + "FechaSolicitud, IdTipoRegistro, IdCategoria, "
-                + "IdSubcategoria, IdOcurrencia, Prioridad, AsignadoA, "
+                + "CreadoPor, CodigoSolicitud, EstadoSolicitud, "
+                + "FechaSolicitud, TipoRegistro, Categoria, "
+                + "Subcategoria, Ocurrencia, Prioridad, AsignadoA, "
                 + "FechaInicio, FechaCaducidad, FechaFinAtencion, "
                 + "DuracionAtencion, CopiaJefatura, JefeAprobador, "
                 + "EstadoAprobacion, UsuarioAprobacion, FechaAprobacion, "
                 + "Nivel, ProblemaMasivo, CCSolicitadoPara, Accion, "
-                + "UsuarioModificacion, Observacion, IdEstadoAnterior, "
-                + "IdEstadoNuevo, FechaRegistro "
+                + "UsuarioModificacion, Observacion, EstadoAnterior, "
+                + "EstadoNuevo, FechaRegistro "
                 + "FROM dbo.CIRI_HistorialSolicitudes "
                 + "WHERE IdSolicitud = @IdSolicitud "
                 + "ORDER BY FechaRegistro, IdHistorialSolicitud", connection))
@@ -75,18 +75,18 @@ namespace SACIRI_backend.Repositories
                             CreadoPor = LeerTexto(reader, "CreadoPor"),
                             CodigoSolicitud = LeerTexto(
                                 reader, "CodigoSolicitud"),
-                            IdEstadoSolicitud = Convert.ToInt32(
-                                reader["IdEstadoSolicitud"]),
+                            EstadoSolicitud = LeerTexto(
+                                reader, "EstadoSolicitud"),
                             FechaSolicitud = Convert.ToDateTime(
                                 reader["FechaSolicitud"]),
-                            IdTipoRegistro = Convert.ToInt32(
-                                reader["IdTipoRegistro"]),
-                            IdCategoria = Convert.ToInt32(
-                                reader["IdCategoria"]),
-                            IdSubcategoria = LeerEnteroNullable(
-                                reader, "IdSubcategoria"),
-                            IdOcurrencia = LeerEnteroNullable(
-                                reader, "IdOcurrencia"),
+                            TipoRegistro = LeerTexto(
+                                reader, "TipoRegistro"),
+                            Categoria = LeerTexto(
+                                reader, "Categoria"),
+                            Subcategoria = LeerTexto(
+                                reader, "Subcategoria"),
+                            Ocurrencia = LeerTexto(
+                                reader, "Ocurrencia"),
                             Prioridad = LeerTexto(reader, "Prioridad"),
                             AsignadoA = LeerTexto(reader, "AsignadoA"),
                             FechaInicio = LeerFechaNullable(
@@ -116,10 +116,10 @@ namespace SACIRI_backend.Repositories
                             UsuarioModificacion = LeerTexto(
                                 reader, "UsuarioModificacion"),
                             Observacion = LeerTexto(reader, "Observacion"),
-                            IdEstadoAnterior = LeerEnteroNullable(
-                                reader, "IdEstadoAnterior"),
-                            IdEstadoNuevo = Convert.ToInt32(
-                                reader["IdEstadoNuevo"]),
+                            EstadoAnterior = LeerTexto(
+                                reader, "EstadoAnterior"),
+                            EstadoNuevo = LeerTexto(
+                                reader, "EstadoNuevo"),
                             FechaRegistro = Convert.ToDateTime(
                                 reader["FechaRegistro"])
                         });

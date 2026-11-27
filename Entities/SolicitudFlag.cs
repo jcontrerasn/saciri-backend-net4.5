@@ -10,6 +10,10 @@ namespace SACIRI_backend.Entities
 
         public string Categoria { get; set; }
 
+        public string Subcategoria { get; set; }
+
+        public string Ocurrencia { get; set; }
+
         public string CreadoPor { get; set; }
 
         public string SolicitadoPara { get; set; }
@@ -19,6 +23,8 @@ namespace SACIRI_backend.Entities
         public DateTime FechaSolicitud { get; set; }
 
         public DateTime? FechaEstimada { get; set; }
+
+        public string JefeAprobador { get; set; }
 
         public string CopiaJefatura { get; set; }
 

@@ -9,12 +9,12 @@ namespace SACIRI_backend.Dtos
         public string SolicitadoPara { get; set; }
         public string CreadoPor { get; set; }
         public string CodigoSolicitud { get; set; }
-        public int IdEstadoSolicitud { get; set; }
+        public string EstadoSolicitud { get; set; }
         public DateTime FechaSolicitud { get; set; }
-        public int IdTipoRegistro { get; set; }
-        public int IdCategoria { get; set; }
-        public int? IdSubcategoria { get; set; }
-        public int? IdOcurrencia { get; set; }
+        public string TipoRegistro { get; set; }
+        public string Categoria { get; set; }
+        public string Subcategoria { get; set; }
+        public string Ocurrencia { get; set; }
         public string Prioridad { get; set; }
         public string AsignadoA { get; set; }
         public DateTime? FechaInicio { get; set; }
@@ -32,8 +32,8 @@ namespace SACIRI_backend.Dtos
         public string Accion { get; set; }
         public string UsuarioModificacion { get; set; }
         public string Observacion { get; set; }
-        public int? IdEstadoAnterior { get; set; }
-        public int IdEstadoNuevo { get; set; }
+        public string EstadoAnterior { get; set; }
+        public string EstadoNuevo { get; set; }
         public DateTime FechaRegistro { get; set; }
     }
 }

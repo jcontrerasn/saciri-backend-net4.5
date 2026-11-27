@@ -9,7 +9,7 @@ namespace SACIRI_backend.Dtos
         public string Usuario { get; set; }
 
         [Required]
-        [StringLength(5)]
+        [StringLength(30)]
         public string Flag { get; set; }
     }
 }

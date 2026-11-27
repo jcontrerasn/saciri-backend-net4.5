@@ -42,9 +42,9 @@ BEGIN
             ;THROW 50003, 'La solicitud no existe.', 1;
         END;
 
-        -- 3. Actualizar estado de la solicitud a 3
+        -- 3. Actualizar estado de la solicitud a 5
         UPDATE dbo.CIRI_Solicitudes
-        SET IdEstadoSolicitud = 3
+        SET IdEstadoSolicitud = 5
         WHERE IdSolicitud = @IdSolicitud;
 
         -- 4. Registrar comentario
@@ -69,12 +69,12 @@ BEGIN
             SolicitadoPara,
             CreadoPor,
             CodigoSolicitud,
-            IdEstadoSolicitud,
+            EstadoSolicitud,
             FechaSolicitud,
-            IdTipoRegistro,
-            IdCategoria,
-            IdSubcategoria,
-            IdOcurrencia,
+            TipoRegistro,
+            Categoria,
+            Subcategoria,
+            Ocurrencia,
             Prioridad,
             AsignadoA,
             FechaInicio,
@@ -92,20 +92,25 @@ BEGIN
             Accion,
             UsuarioModificacion,
             Observacion,
-            IdEstadoAnterior,
-            IdEstadoNuevo
+            EstadoAnterior,
+            EstadoNuevo
         )
         SELECT
             s.IdSolicitud,
             s.SolicitadoPara,
             s.CreadoPor,
             s.CodigoSolicitud,
-            s.IdEstadoSolicitud,
+            (SELECT Nombre FROM dbo.CIRI_EstadosSolicitud
+             WHERE IdEstadoSolicitud = s.IdEstadoSolicitud),
             s.FechaSolicitud,
-            s.IdTipoRegistro,
-            s.IdCategoria,
-            s.IdSubcategoria,
-            s.IdOcurrencia,
+            (SELECT Nombre FROM dbo.CIRI_TipoRegistros
+             WHERE IdTipoRegistro = s.IdTipoRegistro),
+            (SELECT Nombre FROM dbo.CIRI_Categorias
+             WHERE IdCategoria = s.IdCategoria),
+            (SELECT Nombre FROM dbo.CIRI_Subcategorias
+             WHERE IdSubcategoria = s.IdSubcategoria),
+            (SELECT Nombre FROM dbo.CIRI_Ocurrencias
+             WHERE IdOcurrencia = s.IdOcurrencia),
             s.Prioridad,
             s.AsignadoA,
             s.FechaInicio,
@@ -121,11 +126,13 @@ BEGIN
             s.ProblemaMasivo,
             s.CCSolicitadoPara,
 
-            'EnvioInformacion',   -- Acción realizada
+            'Envío de Información',   -- Acción realizada
             @Usuario,             -- Usuario que realizó el cambio
-            @Comentario,          -- Observación
-            @IdEstadoAnterior,    -- Estado anterior
-            s.IdEstadoSolicitud   -- Estado nuevo
+            'Se envió información de la solicitud',          -- Observación
+            (SELECT Nombre FROM dbo.CIRI_EstadosSolicitud
+             WHERE IdEstadoSolicitud = @IdEstadoAnterior),
+            (SELECT Nombre FROM dbo.CIRI_EstadosSolicitud
+             WHERE IdEstadoSolicitud = s.IdEstadoSolicitud)
 
         FROM dbo.CIRI_Solicitudes s
         WHERE s.IdSolicitud = @IdSolicitud;

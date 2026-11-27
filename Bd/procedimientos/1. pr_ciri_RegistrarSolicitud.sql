@@ -159,12 +159,12 @@ BEGIN
             SolicitadoPara,
             CreadoPor,
             CodigoSolicitud,
-            IdEstadoSolicitud,
+            EstadoSolicitud,
             FechaSolicitud,
-            IdTipoRegistro,
-            IdCategoria,
-            IdSubcategoria,
-            IdOcurrencia,
+            TipoRegistro,
+            Categoria,
+            Subcategoria,
+            Ocurrencia,
             Prioridad,
             AsignadoA,
             FechaInicio,
@@ -182,20 +182,25 @@ BEGIN
             Accion,
             UsuarioModificacion,
             Observacion,
-            IdEstadoAnterior,
-            IdEstadoNuevo
+            EstadoAnterior,
+            EstadoNuevo
         )
         SELECT
             s.IdSolicitud,
             s.SolicitadoPara,
             s.CreadoPor,
             s.CodigoSolicitud,
-            s.IdEstadoSolicitud,
+            (SELECT Nombre FROM CIRI_EstadosSolicitud
+             WHERE IdEstadoSolicitud = s.IdEstadoSolicitud),
             s.FechaSolicitud,
-            s.IdTipoRegistro,
-            s.IdCategoria,
-            s.IdSubcategoria,
-            s.IdOcurrencia,
+			(SELECT Nombre FROM CIRI_TipoRegistros
+             WHERE IdTipoRegistro = s.IdTipoRegistro),
+			(SELECT Nombre FROM CIRI_Categorias
+             WHERE IdCategoria = s.IdCategoria),
+			(SELECT Nombre FROM CIRI_Subcategorias
+             WHERE IdSubcategoria = s.IdSubcategoria),
+			(SELECT Nombre FROM CIRI_Ocurrencias
+             WHERE IdOcurrencia = s.IdOcurrencia),
             s.Prioridad,
             s.AsignadoA,
             s.FechaInicio,
@@ -214,30 +219,37 @@ BEGIN
             @CreadoPor,
             N'Solicitud creada',
             NULL,
-            1
+            (SELECT Nombre FROM CIRI_EstadosSolicitud
+             WHERE IdEstadoSolicitud = 1)
         FROM dbo.CIRI_Solicitudes s
         WHERE s.IdSolicitud = @IdSolicitud;
 
-        --  ACTUALIZAR SOLICITUD A ESTADO 2
-        --     Y ASIGNAR RESPONSABLE
+        --  ASIGNAR RESPONSABLE AUTOMÁTICAMENTE
         EXEC dbo.pr_ciri_AsignacionAutomaticaSolicitud
             @IdSolicitud = @IdSolicitud,
             @UsuarioAsignado = @UsuarioAsignado OUTPUT;
 
         -- 11. SEGUNDO HISTORIAL: ASIGNACIÓN AUTOMÁTICA
-        IF @UsuarioAsignado IS NOT NULL
+        IF @UsuarioAsignado IS NULL
         BEGIN
-            INSERT INTO dbo.CIRI_HistorialSolicitudes (
+            UPDATE dbo.CIRI_Solicitudes
+            SET IdEstadoSolicitud = 3
+            WHERE IdSolicitud = @IdSolicitud
+              AND IdEstadoSolicitud = 1
+              AND AsignadoA IS NULL;
+        END;
+
+        INSERT INTO dbo.CIRI_HistorialSolicitudes (
             IdSolicitud,
             SolicitadoPara,
             CreadoPor,
             CodigoSolicitud,
-            IdEstadoSolicitud,
+            EstadoSolicitud,
             FechaSolicitud,
-            IdTipoRegistro,
-            IdCategoria,
-            IdSubcategoria,
-            IdOcurrencia,
+            TipoRegistro,
+            Categoria,
+            Subcategoria,
+            Ocurrencia,
             Prioridad,
             AsignadoA,
             FechaInicio,
@@ -255,20 +267,25 @@ BEGIN
             Accion,
             UsuarioModificacion,
             Observacion,
-            IdEstadoAnterior,
-            IdEstadoNuevo
+            EstadoAnterior,
+            EstadoNuevo
         )
         SELECT
             s.IdSolicitud,
             s.SolicitadoPara,
             s.CreadoPor,
             s.CodigoSolicitud,
-            s.IdEstadoSolicitud,
+            (SELECT Nombre FROM CIRI_EstadosSolicitud
+             WHERE IdEstadoSolicitud = s.IdEstadoSolicitud),
             s.FechaSolicitud,
-            s.IdTipoRegistro,
-            s.IdCategoria,
-            s.IdSubcategoria,
-            s.IdOcurrencia,
+			(SELECT Nombre FROM CIRI_TipoRegistros
+             WHERE IdTipoRegistro = s.IdTipoRegistro),
+			(SELECT Nombre FROM CIRI_Categorias
+             WHERE IdCategoria = s.IdCategoria),
+			(SELECT Nombre FROM CIRI_Subcategorias
+             WHERE IdSubcategoria = s.IdSubcategoria),
+			(SELECT Nombre FROM CIRI_Ocurrencias
+             WHERE IdOcurrencia = s.IdOcurrencia),
             s.Prioridad,
             s.AsignadoA,
             s.FechaInicio,
@@ -283,14 +300,55 @@ BEGIN
             s.Nivel,
             s.ProblemaMasivo,
             s.CCSolicitadoPara,
-            N'Asignación automática',
+            CASE
+                WHEN @UsuarioAsignado IS NULL
+                    THEN 'Pendiente de Asignacion'
+                ELSE 'Asignacion automatica'
+            END,
             'SACIRI',
-            N'El sistema asignó automáticamente la solicitud',
-            1,
-            2
+            CASE
+                WHEN @UsuarioAsignado IS NULL
+                    THEN 'No se encontro un usuario disponible para asignar'
+                ELSE 'El sistema asigno automaticamente la solicitud'
+            END,
+			(SELECT Nombre FROM CIRI_EstadosSolicitud
+             WHERE IdEstadoSolicitud = 1),
+            CASE
+                WHEN @UsuarioAsignado IS NULL THEN
+                    (SELECT Nombre FROM CIRI_EstadosSolicitud
+                     WHERE IdEstadoSolicitud = 3)
+                ELSE
+                    (SELECT Nombre FROM CIRI_EstadosSolicitud
+                     WHERE IdEstadoSolicitud = 4)
+            END
         FROM dbo.CIRI_Solicitudes s
-            WHERE s.IdSolicitud = @IdSolicitud;
-        END;
+        WHERE s.IdSolicitud = @IdSolicitud;
+
+        UPDATE h
+        SET
+            Accion = CASE
+                WHEN @UsuarioAsignado IS NULL
+                    THEN 'Pendiente de Asignacion'
+                ELSE 'Asignacion automatica'
+            END,
+            Observacion = CASE
+                WHEN @UsuarioAsignado IS NULL
+                    THEN 'No se encontro un usuario disponible para asignar'
+                ELSE 'El sistema asigno automaticamente la solicitud'
+            END
+        FROM dbo.CIRI_HistorialSolicitudes h
+        WHERE h.IdSolicitud = @IdSolicitud
+          AND h.EstadoAnterior = (SELECT Nombre
+                                  FROM CIRI_EstadosSolicitud
+                                  WHERE IdEstadoSolicitud = 1)
+          AND h.EstadoNuevo = CASE
+              WHEN @UsuarioAsignado IS NULL THEN
+                  (SELECT Nombre FROM CIRI_EstadosSolicitud
+                   WHERE IdEstadoSolicitud = 3)
+              ELSE
+                  (SELECT Nombre FROM CIRI_EstadosSolicitud
+                   WHERE IdEstadoSolicitud = 4)
+          END;
 
         -- 12. CONFIRMAR TODAS LAS OPERACIONES
         COMMIT TRANSACTION;

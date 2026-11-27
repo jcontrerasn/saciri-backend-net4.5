@@ -420,6 +420,23 @@ namespace SACIRI_backend.Controllers
                         "El cuerpo de la solicitud es obligatorio.", "request");
                 }
 
+                if (string.Equals(
+                    (request.Flag ?? string.Empty).Trim(),
+                    "INICIO",
+                    StringComparison.OrdinalIgnoreCase))
+                {
+                    var inicio = await solicitudService.ObtenerInicioAsync(
+                        request.Usuario,
+                        cancellationToken);
+
+                    return Ok(new ApiResponse<SolicitudInicioResponse>
+                    {
+                        Status = (int)HttpStatusCode.OK,
+                        Message = "Solicitudes obtenidas correctamente para inicio.",
+                        Data = inicio
+                    });
+                }
+
                 var solicitudes = await solicitudService.ObtenerFlagAsync(
                     request.Usuario,
                     request.Flag,

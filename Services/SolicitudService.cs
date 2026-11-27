@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using SACIRI_backend.Dtos;
+using SACIRI_backend.Entities;
 using SACIRI_backend.Interfaces;
 
 namespace SACIRI_backend.Services
@@ -104,8 +105,11 @@ namespace SACIRI_backend.Services
                 && flagNormalizado != "MIS_SOLICITUDES"
                 && flagNormalizado != "TODAS"
                 && flagNormalizado != "PENDIENTES_ASIGNACION"
+                && flagNormalizado != "PENDIENTES_APROBACION"
+                && flagNormalizado != "PENDIENTES_ENVIO_INFORMACION"
                 && flagNormalizado != "CONCLUIDAS"
-                && flagNormalizado != "ANULADAS")
+                && flagNormalizado != "ANULADAS"
+                && flagNormalizado != "INICIO")
             {
                 throw new ArgumentException(
                     "El flag no es válido.", "flag");
@@ -116,19 +120,64 @@ namespace SACIRI_backend.Services
                 flagNormalizado,
                 cancellationToken).ConfigureAwait(false);
 
+            return MapearSolicitudes(solicitudes);
+        }
+
+        public async Task<SolicitudInicioResponse> ObtenerInicioAsync(
+            string usuario,
+            CancellationToken cancellationToken = default(CancellationToken))
+        {
+            if (string.IsNullOrWhiteSpace(usuario))
+            {
+                throw new ArgumentException(
+                    "El usuario es obligatorio.", "usuario");
+            }
+
+            var inicio = await repository.ObtenerInicioAsync(
+                usuario.Trim(),
+                cancellationToken).ConfigureAwait(false);
+
+            return new SolicitudInicioResponse
+            {
+                PendientesEnvioInformacion = CrearGrupo(
+                    MapearSolicitudes(inicio.PendientesEnvioInformacion)),
+                PendientesAprobacion = CrearGrupo(
+                    MapearSolicitudes(inicio.PendientesAprobacion)),
+                Asignadas = CrearGrupo(
+                    MapearSolicitudes(inicio.Asignadas))
+            };
+        }
+
+        private static IList<SolicitudFlagResponse> MapearSolicitudes(
+            IList<SolicitudFlag> solicitudes)
+        {
             return solicitudes.Select(solicitud => new SolicitudFlagResponse
             {
                 CodigoSolicitud = solicitud.CodigoSolicitud,
                 TipoRegistro = solicitud.TipoRegistro,
                 Categoria = solicitud.Categoria,
+                Subcategoria = solicitud.Subcategoria,
+                Ocurrencia = solicitud.Ocurrencia,
                 CreadoPor = solicitud.CreadoPor,
                 SolicitadoPara = solicitud.SolicitadoPara,
                 AsignadoA = solicitud.AsignadoA,
                 FechaSolicitud = solicitud.FechaSolicitud,
                 FechaEstimada = solicitud.FechaEstimada,
+                JefeAprobador = solicitud.JefeAprobador,
                 CopiaJefatura = solicitud.CopiaJefatura,
                 Estado = solicitud.Estado
             }).ToList();
+        }
+
+        private static SolicitudFlagGroupResponse CrearGrupo(
+            IList<SolicitudFlagResponse> solicitudes)
+        {
+            return new SolicitudFlagGroupResponse
+            {
+                Total = solicitudes == null ? 0 : solicitudes.Count,
+                Solicitudes = solicitudes
+                    ?? new List<SolicitudFlagResponse>()
+            };
         }
 
         public async Task<SolicitudPorCodigoResponse> BuscarPorCodigoAsync(

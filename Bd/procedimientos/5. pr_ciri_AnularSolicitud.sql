@@ -44,15 +44,15 @@ BEGIN
         END;
 
         -- 3. Evitar anular dos veces
-        IF @IdEstadoAnterior = 6
+        IF @IdEstadoAnterior = 10
         BEGIN
             ;THROW 50004, 'La solicitud ya se encuentra anulada.', 1;
         END;
 
-        -- 4. Cambiar estado a Anulada (6)
+        -- 4. Cambiar estado a Anulada (10)
         UPDATE dbo.CIRI_Solicitudes
         SET
-            IdEstadoSolicitud = 6,
+            IdEstadoSolicitud = 10,
             FechaFinAtencion = GETDATE()
         WHERE IdSolicitud = @IdSolicitud;
 
@@ -78,12 +78,12 @@ BEGIN
             SolicitadoPara,
             CreadoPor,
             CodigoSolicitud,
-            IdEstadoSolicitud,
+            EstadoSolicitud,
             FechaSolicitud,
-            IdTipoRegistro,
-            IdCategoria,
-            IdSubcategoria,
-            IdOcurrencia,
+            TipoRegistro,
+            Categoria,
+            Subcategoria,
+            Ocurrencia,
             Prioridad,
             AsignadoA,
             FechaInicio,
@@ -101,20 +101,25 @@ BEGIN
             Accion,
             UsuarioModificacion,
             Observacion,
-            IdEstadoAnterior,
-            IdEstadoNuevo
+            EstadoAnterior,
+            EstadoNuevo
         )
         SELECT
             s.IdSolicitud,
             s.SolicitadoPara,
             s.CreadoPor,
             s.CodigoSolicitud,
-            s.IdEstadoSolicitud,
+            (SELECT Nombre FROM dbo.CIRI_EstadosSolicitud
+             WHERE IdEstadoSolicitud = s.IdEstadoSolicitud),
             s.FechaSolicitud,
-            s.IdTipoRegistro,
-            s.IdCategoria,
-            s.IdSubcategoria,
-            s.IdOcurrencia,
+            (SELECT Nombre FROM dbo.CIRI_TipoRegistros
+             WHERE IdTipoRegistro = s.IdTipoRegistro),
+            (SELECT Nombre FROM dbo.CIRI_Categorias
+             WHERE IdCategoria = s.IdCategoria),
+            (SELECT Nombre FROM dbo.CIRI_Subcategorias
+             WHERE IdSubcategoria = s.IdSubcategoria),
+            (SELECT Nombre FROM dbo.CIRI_Ocurrencias
+             WHERE IdOcurrencia = s.IdOcurrencia),
             s.Prioridad,
             s.AsignadoA,
             s.FechaInicio,
@@ -132,8 +137,10 @@ BEGIN
             'Anulacion',
             @Usuario,
             @Comentario,
-            @IdEstadoAnterior,
-            s.IdEstadoSolicitud
+            (SELECT Nombre FROM dbo.CIRI_EstadosSolicitud
+             WHERE IdEstadoSolicitud = @IdEstadoAnterior),
+            (SELECT Nombre FROM dbo.CIRI_EstadosSolicitud
+             WHERE IdEstadoSolicitud = s.IdEstadoSolicitud)
         FROM dbo.CIRI_Solicitudes s
         WHERE s.IdSolicitud = @IdSolicitud;
 

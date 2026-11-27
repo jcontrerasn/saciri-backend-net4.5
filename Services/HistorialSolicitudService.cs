@@ -46,12 +46,12 @@ namespace SACIRI_backend.Services
                 SolicitadoPara = registro.SolicitadoPara,
                 CreadoPor = registro.CreadoPor,
                 CodigoSolicitud = registro.CodigoSolicitud,
-                IdEstadoSolicitud = registro.IdEstadoSolicitud,
+                EstadoSolicitud = registro.EstadoSolicitud,
                 FechaSolicitud = registro.FechaSolicitud,
-                IdTipoRegistro = registro.IdTipoRegistro,
-                IdCategoria = registro.IdCategoria,
-                IdSubcategoria = registro.IdSubcategoria,
-                IdOcurrencia = registro.IdOcurrencia,
+                TipoRegistro = registro.TipoRegistro,
+                Categoria = registro.Categoria,
+                Subcategoria = registro.Subcategoria,
+                Ocurrencia = registro.Ocurrencia,
                 Prioridad = registro.Prioridad,
                 AsignadoA = registro.AsignadoA,
                 FechaInicio = registro.FechaInicio,
@@ -69,8 +69,8 @@ namespace SACIRI_backend.Services
                 Accion = registro.Accion,
                 UsuarioModificacion = registro.UsuarioModificacion,
                 Observacion = registro.Observacion,
-                IdEstadoAnterior = registro.IdEstadoAnterior,
-                IdEstadoNuevo = registro.IdEstadoNuevo,
+                EstadoAnterior = registro.EstadoAnterior,
+                EstadoNuevo = registro.EstadoNuevo,
                 FechaRegistro = registro.FechaRegistro
             }).ToList();
         }

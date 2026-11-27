@@ -44,13 +44,13 @@ BEGIN
         END;
 
         -- 3. Evitar finalizar nuevamente una solicitud finalizada
-        IF @IdEstadoAnterior = 5
+        IF @IdEstadoAnterior = 7
         BEGIN
             ;THROW 50004, 'La solicitud ya se encuentra finalizada.', 1;
         END;
 
         -- 4. Evitar finalizar una solicitud anulada
-        IF @IdEstadoAnterior = 6
+        IF @IdEstadoAnterior = 10
         BEGIN
             ;THROW 50005, 'No se puede finalizar una solicitud anulada.', 1;
         END;
@@ -58,7 +58,7 @@ BEGIN
         -- 5. Actualizar el estado a Finalizada
         UPDATE dbo.CIRI_Solicitudes
         SET
-            IdEstadoSolicitud = 5,
+            IdEstadoSolicitud = 7,
             FechaFinAtencion = GETDATE()
         WHERE IdSolicitud = @IdSolicitud;
 
@@ -84,12 +84,12 @@ BEGIN
             SolicitadoPara,
             CreadoPor,
             CodigoSolicitud,
-            IdEstadoSolicitud,
+            EstadoSolicitud,
             FechaSolicitud,
-            IdTipoRegistro,
-            IdCategoria,
-            IdSubcategoria,
-            IdOcurrencia,
+            TipoRegistro,
+            Categoria,
+            Subcategoria,
+            Ocurrencia,
             Prioridad,
             AsignadoA,
             FechaInicio,
@@ -107,20 +107,25 @@ BEGIN
             Accion,
             UsuarioModificacion,
             Observacion,
-            IdEstadoAnterior,
-            IdEstadoNuevo
+            EstadoAnterior,
+            EstadoNuevo
         )
         SELECT
             s.IdSolicitud,
             s.SolicitadoPara,
             s.CreadoPor,
             s.CodigoSolicitud,
-            s.IdEstadoSolicitud,
+            (SELECT Nombre FROM dbo.CIRI_EstadosSolicitud
+             WHERE IdEstadoSolicitud = s.IdEstadoSolicitud),
             s.FechaSolicitud,
-            s.IdTipoRegistro,
-            s.IdCategoria,
-            s.IdSubcategoria,
-            s.IdOcurrencia,
+            (SELECT Nombre FROM dbo.CIRI_TipoRegistros
+             WHERE IdTipoRegistro = s.IdTipoRegistro),
+            (SELECT Nombre FROM dbo.CIRI_Categorias
+             WHERE IdCategoria = s.IdCategoria),
+            (SELECT Nombre FROM dbo.CIRI_Subcategorias
+             WHERE IdSubcategoria = s.IdSubcategoria),
+            (SELECT Nombre FROM dbo.CIRI_Ocurrencias
+             WHERE IdOcurrencia = s.IdOcurrencia),
             s.Prioridad,
             s.AsignadoA,
             s.FechaInicio,
@@ -136,11 +141,13 @@ BEGIN
             s.ProblemaMasivo,
             s.CCSolicitadoPara,
 
-            'Finalizacion',       -- Acción realizada
+            'Finalización',       -- Acción realizada
             @Usuario,             -- Usuario que finalizó
-            @Comentario,          -- Observación
-            @IdEstadoAnterior,    -- Estado anterior
-            s.IdEstadoSolicitud   -- Estado nuevo (5)
+            'Se finalizó la solicitud',          -- Observación
+            (SELECT Nombre FROM dbo.CIRI_EstadosSolicitud
+             WHERE IdEstadoSolicitud = @IdEstadoAnterior),
+            (SELECT Nombre FROM dbo.CIRI_EstadosSolicitud
+             WHERE IdEstadoSolicitud = s.IdEstadoSolicitud)
 
         FROM dbo.CIRI_Solicitudes s
         WHERE s.IdSolicitud = @IdSolicitud;

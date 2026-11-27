@@ -57,7 +57,7 @@ BEGIN
             INNER JOIN dbo.CIRI_ConexionesUsuarios cu
                 ON cu.Usuario = ur.Usuario
                AND cu.Estado = 1
-            WHERE s.IdEstadoSolicitud = 1
+            WHERE s.IdEstadoSolicitud = 3
               AND s.AsignadoA IS NULL
               AND (
                     CHARINDEX(
@@ -167,10 +167,11 @@ BEGIN
 
         UPDATE dbo.CIRI_Solicitudes
         SET
-            IdEstadoSolicitud = 2,
+            IdEstadoSolicitud = 4,
             AsignadoA = @UsuarioAsignado
         WHERE IdSolicitud = @IdSolicitud
-          AND IdEstadoSolicitud = 1
+          AND IdEstadoSolicitud =
+              CASE WHEN @EsAsignacionPorConexion = 1 THEN 3 ELSE 1 END
           AND AsignadoA IS NULL;
 
         IF @@ROWCOUNT = 0
@@ -190,12 +191,12 @@ BEGIN
                 SolicitadoPara,
                 CreadoPor,
                 CodigoSolicitud,
-                IdEstadoSolicitud,
+                EstadoSolicitud,
                 FechaSolicitud,
-                IdTipoRegistro,
-                IdCategoria,
-                IdSubcategoria,
-                IdOcurrencia,
+                TipoRegistro,
+                Categoria,
+                Subcategoria,
+                Ocurrencia,
                 Prioridad,
                 AsignadoA,
                 FechaInicio,
@@ -213,20 +214,25 @@ BEGIN
                 Accion,
                 UsuarioModificacion,
                 Observacion,
-                IdEstadoAnterior,
-                IdEstadoNuevo
+                EstadoAnterior,
+                EstadoNuevo
             )
             SELECT
                 s.IdSolicitud,
                 s.SolicitadoPara,
                 s.CreadoPor,
                 s.CodigoSolicitud,
-                s.IdEstadoSolicitud,
+                (SELECT Nombre FROM dbo.CIRI_EstadosSolicitud
+                 WHERE IdEstadoSolicitud = s.IdEstadoSolicitud),
                 s.FechaSolicitud,
-                s.IdTipoRegistro,
-                s.IdCategoria,
-                s.IdSubcategoria,
-                s.IdOcurrencia,
+                (SELECT Nombre FROM dbo.CIRI_TipoRegistros
+                 WHERE IdTipoRegistro = s.IdTipoRegistro),
+                (SELECT Nombre FROM dbo.CIRI_Categorias
+                 WHERE IdCategoria = s.IdCategoria),
+                (SELECT Nombre FROM dbo.CIRI_Subcategorias
+                 WHERE IdSubcategoria = s.IdSubcategoria),
+                (SELECT Nombre FROM dbo.CIRI_Ocurrencias
+                 WHERE IdOcurrencia = s.IdOcurrencia),
                 s.Prioridad,
                 s.AsignadoA,
                 s.FechaInicio,
@@ -241,11 +247,16 @@ BEGIN
                 s.Nivel,
                 s.ProblemaMasivo,
                 s.CCSolicitadoPara,
-                'AsignacionAutomatica',
-                @Usuario,
-                N'Solicitud asignada al conectarse el usuario',
-                1,
-                2
+                'Asignación Automática',
+                'SACIRI',
+                CONCAT(
+                    N'Solicitud asignada al conectarse el usuario ',
+                    @Usuario
+                ),
+                (SELECT Nombre FROM dbo.CIRI_EstadosSolicitud
+                 WHERE IdEstadoSolicitud = 3),
+                (SELECT Nombre FROM dbo.CIRI_EstadosSolicitud
+                 WHERE IdEstadoSolicitud = 4)
             FROM dbo.CIRI_Solicitudes s
             WHERE s.IdSolicitud = @IdSolicitud;
 

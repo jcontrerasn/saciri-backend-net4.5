@@ -44,16 +44,16 @@ BEGIN
         END;
 
         -- 3. No permitir solicitar información en estados finales
-        IF @IdEstadoAnterior IN (5, 6)
+        IF @IdEstadoAnterior IN (7, 8, 9, 10)
         BEGIN
             ;THROW 50004,
                 'No se puede solicitar información de una solicitud finalizada o anulada.',
                 1;
         END;
 
-        -- 4. Cambiar estado a 4 (Información solicitada)
+        -- 4. Cambiar estado a 6 (Información solicitada)
         UPDATE dbo.CIRI_Solicitudes
-        SET IdEstadoSolicitud = 4
+        SET IdEstadoSolicitud = 6
         WHERE IdSolicitud = @IdSolicitud;
 
         -- 5. Registrar comentario
@@ -78,12 +78,12 @@ BEGIN
             SolicitadoPara,
             CreadoPor,
             CodigoSolicitud,
-            IdEstadoSolicitud,
+            EstadoSolicitud,
             FechaSolicitud,
-            IdTipoRegistro,
-            IdCategoria,
-            IdSubcategoria,
-            IdOcurrencia,
+            TipoRegistro,
+            Categoria,
+            Subcategoria,
+            Ocurrencia,
             Prioridad,
             AsignadoA,
             FechaInicio,
@@ -101,20 +101,25 @@ BEGIN
             Accion,
             UsuarioModificacion,
             Observacion,
-            IdEstadoAnterior,
-            IdEstadoNuevo
+            EstadoAnterior,
+            EstadoNuevo
         )
         SELECT
             s.IdSolicitud,
             s.SolicitadoPara,
             s.CreadoPor,
             s.CodigoSolicitud,
-            s.IdEstadoSolicitud,
+            (SELECT Nombre FROM dbo.CIRI_EstadosSolicitud
+             WHERE IdEstadoSolicitud = s.IdEstadoSolicitud),
             s.FechaSolicitud,
-            s.IdTipoRegistro,
-            s.IdCategoria,
-            s.IdSubcategoria,
-            s.IdOcurrencia,
+            (SELECT Nombre FROM dbo.CIRI_TipoRegistros
+             WHERE IdTipoRegistro = s.IdTipoRegistro),
+            (SELECT Nombre FROM dbo.CIRI_Categorias
+             WHERE IdCategoria = s.IdCategoria),
+            (SELECT Nombre FROM dbo.CIRI_Subcategorias
+             WHERE IdSubcategoria = s.IdSubcategoria),
+            (SELECT Nombre FROM dbo.CIRI_Ocurrencias
+             WHERE IdOcurrencia = s.IdOcurrencia),
             s.Prioridad,
             s.AsignadoA,
             s.FechaInicio,
@@ -130,11 +135,13 @@ BEGIN
             s.ProblemaMasivo,
             s.CCSolicitadoPara,
 
-            'SolicitudInformacion',  
+            'Solicitud de Información',
             @Usuario,                
-            @Comentario,             
-            @IdEstadoAnterior,       
-            s.IdEstadoSolicitud      
+            'Se solicitó información de la solicitud',
+            (SELECT Nombre FROM dbo.CIRI_EstadosSolicitud
+             WHERE IdEstadoSolicitud = @IdEstadoAnterior),
+            (SELECT Nombre FROM dbo.CIRI_EstadosSolicitud
+             WHERE IdEstadoSolicitud = s.IdEstadoSolicitud)
 
         FROM dbo.CIRI_Solicitudes s
         WHERE s.IdSolicitud = @IdSolicitud;

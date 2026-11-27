@@ -50,7 +50,7 @@ BEGIN
         END;
 
         -- 3. Solo reasignar cuando está En Atención
-        IF @IdEstadoAnterior <> 3
+        IF @IdEstadoAnterior <> 5
         BEGIN
             ;THROW 50005, 'La solicitud no se encuentra en estado En Atención.', 1;
         END;
@@ -58,7 +58,7 @@ BEGIN
         -- 4. Reasignar solicitud
         UPDATE dbo.CIRI_Solicitudes
         SET
-            IdEstadoSolicitud = 2,
+            IdEstadoSolicitud = 4,
 			AsignadoA = @AsignadoA
         WHERE IdSolicitud = @IdSolicitud;
 
@@ -84,12 +84,12 @@ BEGIN
             SolicitadoPara,
             CreadoPor,
             CodigoSolicitud,
-            IdEstadoSolicitud,
+            EstadoSolicitud,
             FechaSolicitud,
-            IdTipoRegistro,
-            IdCategoria,
-            IdSubcategoria,
-            IdOcurrencia,
+            TipoRegistro,
+            Categoria,
+            Subcategoria,
+            Ocurrencia,
             Prioridad,
             AsignadoA,
             FechaInicio,
@@ -107,20 +107,25 @@ BEGIN
             Accion,
             UsuarioModificacion,
             Observacion,
-            IdEstadoAnterior,
-            IdEstadoNuevo
+            EstadoAnterior,
+            EstadoNuevo
         )
         SELECT
             s.IdSolicitud,
             s.SolicitadoPara,
             s.CreadoPor,
             s.CodigoSolicitud,
-            s.IdEstadoSolicitud,
+            (SELECT Nombre FROM dbo.CIRI_EstadosSolicitud
+             WHERE IdEstadoSolicitud = s.IdEstadoSolicitud),
             s.FechaSolicitud,
-            s.IdTipoRegistro,
-            s.IdCategoria,
-            s.IdSubcategoria,
-            s.IdOcurrencia,
+            (SELECT Nombre FROM dbo.CIRI_TipoRegistros
+             WHERE IdTipoRegistro = s.IdTipoRegistro),
+            (SELECT Nombre FROM dbo.CIRI_Categorias
+             WHERE IdCategoria = s.IdCategoria),
+            (SELECT Nombre FROM dbo.CIRI_Subcategorias
+             WHERE IdSubcategoria = s.IdSubcategoria),
+            (SELECT Nombre FROM dbo.CIRI_Ocurrencias
+             WHERE IdOcurrencia = s.IdOcurrencia),
             s.Prioridad,
             s.AsignadoA,
             s.FechaInicio,
@@ -138,9 +143,11 @@ BEGIN
 
             'Reasignación',       -- Acción realizada
             @Usuario,             -- Usuario que finalizó
-            @Comentario,          -- Observación
-            @IdEstadoAnterior,    -- Estado anterior
-            s.IdEstadoSolicitud   -- Estado nuevo (5)
+            CONCAT('Se reasignó la solicitud a ', @AsignadoA),          -- Observación
+            (SELECT Nombre FROM dbo.CIRI_EstadosSolicitud
+             WHERE IdEstadoSolicitud = @IdEstadoAnterior),
+            (SELECT Nombre FROM dbo.CIRI_EstadosSolicitud
+             WHERE IdEstadoSolicitud = s.IdEstadoSolicitud)
 
         FROM dbo.CIRI_Solicitudes s
         WHERE s.IdSolicitud = @IdSolicitud;
